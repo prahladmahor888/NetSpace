@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+{% load static %}
+{% load room_filters %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ room.room_name }} - Room</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'css/room_detail.css' %}" rel="stylesheet">
+    <style>
+        /* Base Layout */
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .content-wrapper {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            padding-top: 56px;
+            overflow: hidden;
+        }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #666;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+
+        /* Main Content Areas */
+        .main-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            height: calc(100vh - 56px);
+        }
+
+        .video-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 150px);
+            overflow-y: auto;
+            place-items: start;
+            align-content: start;
+        }
+
+        .sidebar {
+            width: 300px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .participants-list, .chat-messages {
+            height: calc(100% - 50px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #666 #1a1a1a;
+        }
+
+        .video-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 1rem;
+            height: calc(100% - 80px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #666 #1a1a1a;
+        }
+
+        .video-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .video-grid::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .video-grid::-webkit-scrollbar-thumb {
+            background-color: #666;
+            border-radius: 4px;
+            border: 2px solid #1a1a1a;
+        }
+
+        .video-grid::-webkit-scrollbar-thumb:hover {
+            background-color: #888;
+        }
+        
+        .video-seat {
+            width: 100%;
+            min-height: 200px;
+            aspect-ratio: 16/9;
+            margin-bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+        .video-seat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .host-seat {
+            grid-column: 1 / -1;
+            height: 400px;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            border: 3px solid #ffd700;
+        }
+
+        @media (min-width: 1200px) {
+            .host-seat {
+                max-width: 800px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .video-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+                padding: 1rem;
+            }
+        }
+        
+        .placeholder {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.7);
+            gap: 0.5rem;
+        }
+        
+        .seat-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        
+        .host-seat .seat-label {
+            background: rgba(255, 215, 0, 0.3);
+        }
+        
+        .video-grid video {
+            width: 100%;
+            border-radius: 8px;
+            background: #1a1a1a;
+        }
+        
+        .controls {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        .control-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: #2c2c2c;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: #3c3c3c;
+        }
+        
+        .control-btn.danger {
+            background: #dc3545;
+        }
+        
+        .control-btn.danger:hover {
+            background: #bb2d3b;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #1a1a1a;
+            border-left: 1px solid #2c2c2c;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-tabs {
+            display: flex;
+            border-bottom: 1px solid #2c2c2c;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: none;
+            color: #fff;
+            opacity: 0.7;
+        }
+        
+        .tab-btn.active {
+            opacity: 1;
+            border-bottom: 2px solid #007bff;
+        }
+        
+        .tab-content {
+            display: none;
+            flex: 1;
+        }
+        
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .participants-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .participant-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            color: white;
+        }
+        
+        .participant-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .participant-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+        }
+        
+        .participant-item.host {
+            background-color: rgba(255,255,255,0.05);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                transform: translateX(100%);
+                transition: transform 0.3s;
+            }
+        
+            .sidebar.show {
+                transform: translateX(0);
+            }
+        
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1400px) {
+            .host-seat {
+                max-width: 800px;
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .video-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .host-seat {
+                max-width: 100%;
+                height: 300px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .host-seat {
+                height: 250px;
+            }
+        }
+        
+        .video-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .participant-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+        
+        .video-seat video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+
+/* Chat Messages */
+.chat-messages {
+    height: calc(100% - 70px);
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    background: #1a1a1a;
+    color: white;
+}
+
+.chat-message {
+    display: flex;
+    gap: 12px;
+    max-width: 80%;
+    align-items: flex-end;
+    transition: all 0.2s ease;
+}
+
+.chat-message:hover {
+    transform: translateY(-1px);
+}
+
+.chat-message img {
+    width: 36px;
+    height: 36px;
+    border: 2px solid #3d3d3d;
+    transition: transform 0.2s;
+}
+
+.chat-message:hover img {
+    transform: scale(1.1);
+}
+
+.chat-message.sent {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.chat-message.received {
+    align-self: flex-start;
+}
+
+.message-content {
+    background: #2d2d2d;
+    padding: 10px 15px;
+    border-radius: 16px;
+    position: relative;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chat-message.sent .message-content {
+    background: linear-gradient(135deg, #0d6efd, #0099ff);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.message-username {
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.message-time {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.75rem;
+    margin-left: 10px;
+}
+
+.chat-message p {
+    margin: 0;
+    color: #ffffff;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.chat-input {
+    padding: 15px 20px;
+    background: #2d2d2d;
+    border-top: 1px solid #3d3d3d;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.chat-input input {
+    background: #1a1a1a;
+    border: 2px solid #3d3d3d;
+    color: #ffffff;
+    padding: 12px 18px;
+    border-radius: 24px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.chat-input input:focus {
+    background: #1a1a1a;
+    border-color: #0d6efd;
+    color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+.chat-input input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.chat-input button {
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.chat-input button:hover {
+    transform: scale(1.05);
+}
+
+    </style>
+</head>
+<body class="bg-dark">
+    {% include "include/navbar.html" %}
+
+    <div class="content-wrapper">
+        <!-- Room Info Bar -->
+        <div class="room-info bg-dark text-light p-3 border-bottom border-secondary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="{{ room.user.profile_picture.url|default:'/static/images/default-pfp.png' }}" 
+                         class="rounded-circle" width="40" height="40">
+                    <div>
+                        <h5 class="mb-0">{{ room.room_name }}</h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="">Hosted by {{ room.user.username }}</small>
+                            <span class="bg-primary" title="Room ID" style="cursor: pointer" onclick="copyRoomId()">
+                                ID: {{ room.room_code }}
+                                <i class="fas fa-copy ms-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-light" id="toggleParticipants">
+                        <i class="fas fa-users"></i>
+                        <span class="d-none d-md-inline ms-1">Participants</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-light" id="toggleChat">
+                        <i class="fas fa-comments"></i>
+                        <span class="d-none d-md-inline ms-1">Chat</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Video Grid -->
+            <div class="video-section">
+                <div id="video-grid" class="video-grid">
+                    <!-- Host Seat -->
+                    <div class="video-seat host-seat" id="hostSeat" data-user-id="{{ room.user.id }}">
+                        {% if request.user == room.user %}
+                            <video id="localVideo" autoplay playsinline muted></video>
+                            <div class="video-overlay">
+                                <img src="{{ room.user.profile_picture.url|default:'/static/images/default-pfp.png' }}" 
+                                     class="participant-avatar">
+                                <span class="participant-name">{{ room.user.username }}</span>
+                            </div>
+                        {% else %}
+                            <div class="placeholder">
+                                <i class="fas fa-user-tie fa-2x"></i>
+                                <span>Host Seat</span>
+                            </div>
+                        {% endif %}
+                        <div class="seat-label">
+                            <i class="fas fa-crown"></i> Host
+                        </div>
+                    </div>
+                    
+                    <!-- Participant Seats -->
+                    {% for i in "12345678" %}
+                    <div class="video-seat participant-seat" data-seat-number="{{ forloop.counter }}">
+                        {% if seat_assignments|get_item:forloop.counter %}
+                            <!-- Occupied Seat -->
+                            <video id="participant-video-{{ forloop.counter }}" autoplay playsinline></video>
+                            <div class="video-overlay">
+                                <img src="{{ seat_assignments|get_item:forloop.counter|get_profile_pic }}" 
+                                     class="participant-avatar">
+                                <span class="participant-name">
+                                    {{ seat_assignments|get_item:forloop.counter|get_username }}
+                                </span>
+                            </div>
+                        {% elif seat_requests|get_item:forloop.counter %}
+                            <!-- Pending Request -->
+                            <div class="seat-request-pending">
+                                <img src="{{ seat_requests|get_item:forloop.counter|get_profile_pic }}" 
+                                     class="participant-avatar">
+                                <span>Requesting...</span>
+                                {% if request.user == room.user %}
+                                    <div class="seat-controls">
+                                        <button class="btn btn-sm btn-success accept-request"
+                                                onclick="acceptSeatRequest({{ forloop.counter }}, '{{ seat_requests|get_item:forloop.counter|get_user_id }}')">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger reject-request"
+                                                onclick="rejectSeatRequest({{ forloop.counter }}, '{{ seat_requests|get_item:forloop.counter|get_user_id }}')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <!-- Empty Seat -->
+                            <div class="placeholder" {% if request.user != room.user %}onclick="requestSeat({{ forloop.counter }})"{% endif %}>
+                                <i class="fas fa-user fa-2x"></i>
+                                <span>{% if request.user != room.user %}Request {% endif %}Seat {{ forloop.counter }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="seat-label">Participant</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Controls -->
+                <div class="controls">
+                    <div class="d-flex justify-content-center gap-3">
+                        <button class="control-btn" id="muteBtn">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button class="control-btn" id="videoBtn">
+                            <i class="fas fa-video"></i>
+                        </button>
+                        <button class="control-btn" id="screenShareBtn">
+                            <i class="fas fa-desktop"></i>
+                        </button>
+                        <button class="control-btn danger" id="leaveBtn">
+                            <i class="fas fa-phone-slash"></i>
+                        </button>
+                        {% if request.user == room.user %}
+                        <button class="control-btn danger" id="deleteRoomBtn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-tabs">
+                    <button class="tab-btn active" data-tab="participants">
+                        Participants ({{ room.participant_count }})
+                    </button>
+                    <button class="tab-btn" data-tab="chat">Chat</button>
+                </div>
+
+                <!-- Participants List -->
+                <div class="tab-content active" id="participants-tab">
+                    <div class="participants-list">
+                        <!-- Host -->
+                        <div class="participant-item host">
+                            <img src="{{ room.user.profile_picture.url|default:'/static/images/default-pfp.png' }}" 
+                                 class="rounded-circle" width="32" height="32">
+                            <div class="participant-info">
+                                <span>{{ room.user.username }}</span>
+                                <span class="badge bg-warning">Host</span>
+                                <span class="online-indicator"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Other Participants -->
+                        {% for participant in room.participants.all %}
+                            {% if participant != room.user %}
+                            <div class="participant-item">
+                                <img src="{{ participant.profile_picture.url|default:'/static/images/default-pfp.png' }}" 
+                                     class="rounded-circle" width="32" height="32">
+                                <div class="participant-info">
+                                    <span>{{ participant.username }}</span>
+                                    {% if participant.is_active %}
+                                        <span class="online-indicator"></span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Chat Section -->
+                <div class="tab-content" id="chat-tab">
+                    <div class="chat-messages" id="chatMessages">
+                        {% for message in room_messages %}
+                            <div class="chat-message {% if message.user == request.user %}sent{% else %}received{% endif %}">
+                                <img src="{{ message.user.profile_picture.url|default:'/static/images/default-pfp.png' }}" 
+                                     alt="{{ message.user.username }}"
+                                     class="rounded-circle" width="32" height="32">
+                                <div class="message-content">
+                                    <div class="message-header">
+                                        <span class="message-username">{{ message.user.username }}</span>
+                                        <small class="message-time">{{ message.timestamp|time:"g:i A" }}</small>
+                                    </div>
+                                    <p class="mb-0">{{ message.content }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <form class="chat-input" id="chatForm" onsubmit="sendMessage(event)">
+                        <input type="text" name="message" placeholder="Type a message..." class="form-control" required autocomplete="off">
+                        <button type="submit" class="btn btn-primary px-3">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/room.js' %}"></script>
+    <script>
+        const roomId = {{ room.id }};  // Add this line
+        
+        function copyRoomId() {
+            navigator.clipboard.writeText('{{ room.id }}');
+            // Optional: Add toast notification for copy success
+        }
+
+        function requestSeat(seatNumber) {
+            if (confirm(`Request to join seat ${seatNumber}?`)) {
+                roomSocket.send(JSON.stringify({
+                    type: 'request_seat',
+                    seat_number: seatNumber,
+                    user_id: '{{ request.user.id }}'
+                }));
+            }
+        }
+
+        function acceptSeatRequest(seatNumber, userId) {
+            roomSocket.send(JSON.stringify({
+                type: 'seat_response',
+                seat_number: seatNumber,
+                user_id: userId,
+                accepted: true
+            }));
+        }
+
+        function rejectSeatRequest(seatNumber, userId) {
+            roomSocket.send(JSON.stringify({
+                type: 'seat_response',
+                seat_number: seatNumber,
+                user_id: userId,
+                accepted: false
+            }));
+        }
+
+        document.getElementById('chatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const messageInput = this.querySelector('input[name="message"]');
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                fetch(`/netspace/room/${roomId}/messages/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        appendMessage(data.message);
+                        messageInput.value = '';
+                    } else {
+                        alert(data.message || 'Error sending message');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error sending message');
+                });
+            }
+        });
+
+        function appendMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `chat-message ${message.is_own_message ? 'sent' : 'received'}`;
+            
+            messageEl.innerHTML = `
+                <img src="${message.user_image || '/static/images/default-pfp.png'}" 
+                     alt="${message.username}"
+                     class="rounded-circle" width="32" height="32">
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-username">${message.username}</span>
+                        <small class="message-time">${message.timestamp}</small>
+                    </div>
+                    <p class="mb-0">${message.content}</p>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Add leave and delete room handlers
+        document.getElementById('leaveBtn').addEventListener('click', async function() {
+            if (confirm('Are you sure you want to leave this room?')) {
+                await leaveRoom();
+            }
+        });
+
+        {% if request.user == room.user %}
+        document.getElementById('deleteRoomBtn').addEventListener('click', async function() {
+            if (confirm('Are you sure you want to delete this room? This action cannot be undone.')) {
+                await deleteRoom();
+            }
+        });
+        {% endif %}
+
+        async function leaveRoom() {
+            try {
+                // Stop media streams
+                if (window.localStream) {
+                    window.localStream.getTracks().forEach(track => track.stop());
+                }
+                
+                // Close peer connections
+                if (window.peerConnections) {
+                    Object.values(window.peerConnections).forEach(pc => pc.close());
+                }
+
+                const response = await fetch(`/netspace/room/${roomId}/leave/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Close WebSocket connection
+                    if (window.roomSocket && window.roomSocket.readyState === WebSocket.OPEN) {
+                        window.roomSocket.close();
+                    }
+                    window.location.href = '/netspace/rooms/';
+                } else {
+                    throw new Error(data.message || 'Failed to leave room');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'Error leaving room. Please try again.');
+            }
+        }
+
+        async function deleteRoom() {
+            try {
+                const response = await fetch(`/netspace/room/${roomId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Cleanup and redirect
+                    if (window.localStream) {
+                        window.localStream.getTracks().forEach(track => track.stop());
+                    }
+                    if (window.peerConnections) {
+                        Object.values(window.peerConnections).forEach(pc => pc.close());
+                    }
+                    if (window.roomSocket && window.roomSocket.readyState === WebSocket.OPEN) {
+                        window.roomSocket.close();
+                    }
+                    window.location.href = '/netspace/rooms/';
+                } else {
+                    throw new Error(data.message || 'Failed to delete room');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'Error deleting room. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

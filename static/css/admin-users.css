@@ -1,0 +1,303 @@
+/* Custom animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Card Gradients */
+.bg-gradient-to-br {
+    background-size: 150% 150%;
+    animation: gradientShift 3s ease infinite;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bg-gradient-to-br:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Layout adjustments */
+.flex-1.overflow-hidden {
+    height: calc(100vh - 0px); /* Adjust based on navbar height */
+    background-color: #f9fafb;
+}
+
+/* Table styles */
+.overflow-x-auto {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    border-radius: 0.75rem;
+    background: linear-gradient(to right, white 30%, rgba(255, 255, 255, 0)),
+                linear-gradient(to right, rgba(255, 255, 255, 0), white 70%) 100% 0,
+                radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0)),
+                radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0)) 100% 0;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+}
+
+/* Card hover effect */
+.bg-white.rounded-xl {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.bg-white.rounded-xl:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Stats card hover effect */
+.stats-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: both;
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stats-card:nth-child(1) { animation-delay: 0.1s; }
+.stats-card:nth-child(2) { animation-delay: 0.2s; }
+.stats-card:nth-child(3) { animation-delay: 0.3s; }
+.stats-card:nth-child(4) { animation-delay: 0.4s; }
+
+.stats-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .flex-1.p-8 {
+        padding: 1rem;
+    }
+    
+    .overflow-x-auto {
+        margin: 0 -1rem;
+    }
+    
+    .px-6 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .flex-1.overflow-hidden {
+        height: calc(100vh - 64px); /* Adjust for mobile navbar */
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .stats-card {
+        transform: none !important;
+    }
+}
+
+/* Enhanced table hover effects */
+tbody tr {
+    position: relative;
+    isolation: isolate;
+    transition: all 0.2s ease;
+    animation: fadeIn 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+tbody tr:hover {
+    transform: translateY(-1px);
+    background-color: rgba(59, 130, 246, 0.02);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.02);
+}
+
+tbody tr::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.05));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+tbody tr:hover::after {
+    opacity: 1;
+}
+
+/* Smooth transitions */
+button, input {
+    transition: all 0.2s ease;
+}
+
+button {
+    position: relative;
+    overflow: hidden;
+    transform: translateY(0);
+    transition: all 0.2s ease;
+}
+
+button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease-out, height 0.3s ease-out;
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:active::after {
+    width: 200%;
+    height: 200%;
+}
+
+input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+/* Pagination */
+.btn-pagination {
+    @apply relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50;
+    transition: all 0.2s ease;
+}
+
+.btn-pagination:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Loading States */
+.loading-shimmer {
+    background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Table Improvements */
+.group:hover svg {
+    transform: translateY(2px);
+}
+
+/* Filter Bar */
+select {
+    background-image: url("data:image/svg+xml,...");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* User Type Tabs */
+.user-tab-btn {
+    display: none; /* Hide any remaining tab buttons */
+}
+
+/* Admin Badge Animation */
+@keyframes adminBadgePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+[data-user-type="admin"] .bg-indigo-100 {
+    animation: adminBadgePulse 2s infinite;
+}
+
+/* Hide/Show Animation */
+tr[data-user-type] {
+    transition: all 0.3s ease-out;
+}
+
+tr[data-user-type].hidden {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+/* Admin List Modal */
+#adminListModal .transform {
+    transition: all 0.3s ease-out;
+}
+
+#adminListModal.hidden .transform {
+    transform: scale(0.95);
+    opacity: 0;
+}
+
+#adminListModal.flex .transform {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Admin card click effect */
+.cursor-pointer:active {
+    transform: scale(0.98);
+}

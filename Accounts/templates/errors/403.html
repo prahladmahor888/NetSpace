@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 Forbidden</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .error-container {
+            text-align: center;
+            padding: 3rem;
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            max-width: 450px;
+            animation: slideUp 0.5s ease-out, floatingContainer 6s ease-in-out infinite;
+        }
+        .error-icon {
+            font-size: 48px;
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite, rotate 4s infinite linear;
+        }
+        .error-code {
+            font-size: 64px;
+            font-weight: 700;
+            color: #2d3436;
+            margin: 0;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .error-message {
+            font-size: 28px;
+            color: #2d3436;
+            margin: 1rem 0;
+            font-weight: 600;
+        }
+        .error-description {
+            color: #636e72;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .back-button {
+            background: linear-gradient(45deg, #4834d4, #686de0);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(104, 109, 224, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(104, 109, 224, 0.3);
+        }
+        .back-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .particle {
+            position: absolute;
+            background: linear-gradient(45deg, #4834d4, #686de0);
+            border-radius: 50%;
+            animation: moveParticle 8s infinite linear;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes floatingContainer {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+            100% { left: 100%; }
+        }
+        @keyframes moveParticle {
+            0% {
+                transform: translate(0, 0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translate(var(--move-x), var(--move-y));
+                opacity: 0;
+            }
+        }
+        .logo {
+            margin-bottom: 1.5rem;
+            font-size: 24px;
+            font-weight: 700;
+            color: #4834d4;
+            letter-spacing: 1px;
+        }
+        
+        .logo span {
+            color: #ff6b6b;
+        }
+        
+        .support-links {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .support-button {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 8px;
+            color: #4834d4;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .support-button:hover {
+            color: #ff6b6b;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="particles"></div>
+    <div class="error-container">
+        <div class="logo">AI<span>Web</span></div>
+        <i class="fas fa-lock error-icon"></i>
+        <h1 class="error-code">403</h1>
+        <h2 class="error-message">Access Denied</h2>
+        <p class="error-description">This area of AI Web requires specific permissions. If you believe you should have access to this AI-powered feature, please verify your subscription level or contact our support team.</p>
+        <a href="/" class="back-button">Return to Dashboard</a>
+        <div class="support-links">
+            <a href="/docs" class="support-button"><i class="fas fa-book"></i> Documentation</a>
+            <a href="/support" class="support-button"><i class="fas fa-headset"></i> Support</a>
+            <a href="/pricing" class="support-button"><i class="fas fa-crown"></i> Upgrade Plan</a>
+        </div>
+    </div>
+    <script>
+        // Add particle effect
+        const particlesContainer = document.querySelector('.particles');
+        for(let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            particle.style.width = Math.random() * 10 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.left = Math.random() * 100 + 'vw';
+            particle.style.top = Math.random() * 100 + 'vh';
+            particle.style.setProperty('--move-x', (Math.random() * 200 - 100) + 'px');
+            particle.style.setProperty('--move-y', (Math.random() * 200 - 100) + 'px');
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            particlesContainer.appendChild(particle);
+        }
+    </script>
+</body>
+</html>

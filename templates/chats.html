@@ -1,0 +1,2387 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Chats</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --hover-bg: #f8f9fa;
+            --border-color: #e9ecef;
+            --chat-bg: #f5f7fb;
+            --message-sent: #0d6efd;
+            --message-received: #e9ecef;
+            --transition-speed: 0.3s;
+            --bounce-timing: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        body {
+            background-color: var(--chat-bg);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            margin-top: 60px;
+            height: calc(100vh - 60px);
+            background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        .chat-sidebar {
+            height: 100%;
+            border-right: 1px solid var(--border-color);
+            background: white;
+            animation: slideIn 0.5s var(--bounce-timing);
+        }
+        
+        .chat-main {
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+            position: sticky;
+            top: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .header-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all var(--transition-speed) var(--bounce-timing);
+            cursor: pointer;
+        }
+
+        .header-icon:hover {
+            background: var(--hover-bg);
+            color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-input {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background: #fff;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+        }
+
+        .input-actions {
+            position: absolute;
+            left: 1rem;
+            bottom: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all var(--transition-speed) var(--bounce-timing);
+            cursor: pointer;
+        }
+
+        .input-icon:hover {
+            background: var(--hover-bg);
+            color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            position: relative;
+            animation: messageSlide 0.3s var(--bounce-timing);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .message-sent {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 0.25rem;
+        }
+
+        .message-received {
+            background: var(--message-received);
+            margin-right: auto;
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
+        .input-message {
+            border-radius: 1.5rem;
+            padding-right: 6rem;
+            resize: none;
+            height: 50px;
+            padding-left: 8rem;
+        }
+
+        .btn-send {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 1.5rem;
+            padding: 0.5rem 1.5rem;
+            transition: all var(--transition-speed) var(--bounce-timing);
+        }
+
+        .btn-send:hover {
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .user-list {
+            height: calc(100% - 80px);
+            overflow-y: auto;
+        }
+        
+        .user-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .user-list::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 3px;
+        }
+        
+        .search-container {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        
+        .user-card {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all var(--transition-speed) var(--bounce-timing);
+            transform-origin: center;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border-left: 4px solid transparent;
+        }
+        
+        .user-card:hover {
+            background: var(--hover-bg);
+            border-left: 4px solid var(--primary-color);
+            transform: translateX(4px) scale(1.01);
+        }
+        
+        .user-card.selected {
+            background: white;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+        }
+        
+        .user-card.selected .text-muted {
+            color: #6c757d !important;
+        }
+
+        .user-card.selected .unread-badge {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .user-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(13, 110, 253, 0.1));
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .user-card:hover::after {
+            transform: translateX(0);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid white;
+        }
+        
+        .status-online {
+            background-color: #28a745;
+            animation: pulseOnline 2s infinite;
+        }
+        
+        .status-offline {
+            background-color: #dc3545;
+        }
+        
+        .status-away {
+            background-color: #ffc107;
+        }
+        
+        .avatar-container {
+            position: relative;
+        }
+        
+        .message-preview {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        
+        .unread-badge {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            animation: bounce 1s var(--bounce-timing);
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .typing-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #666;
+            animation: typing 1s infinite;
+        }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulseOnline {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-4px); }
+            60% { transform: translateY(-2px); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .search-box {
+            transition: all var(--transition-speed) ease;
+        }
+
+        .search-box:focus {
+            transform: scale(1.02);
+        }
+
+        @media (max-width: 767.98px) {
+            .chat-sidebar {
+                position: fixed;
+                left: 0;
+                top: 60px;
+                width: 100%;
+                z-index: 1000;
+                height: calc(100vh - 60px);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .chat-sidebar.active {
+                transform: translateX(0);
+            }
+
+            .chat-main {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .back-to-users {
+                display: block !important;
+                position: absolute;
+                left: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 2;
+                cursor: pointer;
+                padding: 0.5rem;
+                border-radius: 50%;
+                transition: background 0.3s;
+            }
+
+            .back-to-users:hover {
+                background: var(--hover-bg);
+            }
+
+            .chat-header {
+                padding-left: 3.5rem;
+            }
+
+            body.sidebar-active {
+                overflow: hidden;
+            }
+        }
+
+        .incoming-call-animation {
+            position: relative;
+        }
+
+        .ripple {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px solid var(--primary-color);
+            animation: ripple 1s infinite;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .call-history {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: #f8f9fa;
+            margin-bottom: 1rem;
+        }
+
+        .call-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .call-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .call-icon.video { background: var(--primary-color); }
+        .call-icon.voice { background: #28a745; }
+        .call-icon.missed { background: #dc3545; }
+
+        .call-details {
+            flex: 1;
+        }
+
+        .call-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .call-duration {
+            font-size: 0.75rem;
+            color: #28a745;
+        }
+
+        .more-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .more-dropdown.show {
+            display: block;
+        }
+
+        .more-dropdown-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .more-dropdown-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .more-dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.5rem 0;
+        }
+
+        .more-dropdown {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 10px);
+            background: white;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            min-width: 240px;
+            z-index: 1010;
+            display: none;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            transform-origin: top right;
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        .more-dropdown.show {
+            display: block;
+            animation: dropdownIn 0.2s var(--bounce-timing) forwards;
+        }
+
+        .more-dropdown-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #333;
+        }
+
+        .more-dropdown-item i {
+            font-size: 20px;
+            color: #666;
+        }
+
+        .more-dropdown-item:hover {
+            background: var(--hover-bg);
+            padding-left: 20px;
+        }
+
+        .more-dropdown-item.text-danger {
+            color: #dc3545;
+        }
+
+        .more-dropdown-item.text-danger i {
+            color: #dc3545;
+        }
+
+        .more-dropdown-item.text-danger:hover {
+            background: #fff5f5;
+        }
+
+        .more-dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        @keyframes dropdownIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Add a small arrow to the dropdown */
+        .more-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 15px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            transform: rotate(45deg);
+            border-left: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Ensure proper positioning relative to header icon */
+        .header-icon.position-relative {
+            z-index: 1011;
+        }
+        .block-btn {
+            color: red;
+            cursor: pointer;
+            float: right;
+            margin-left: 10px;
+        }
+        .blocked-user {
+            opacity: 0.5;
+        }
+        /* Call Modal Styles */
+        .call-modal-content {
+            background: linear-gradient(135deg, #1a237e, #0d47a1);
+            color: white;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .call-avatar-container {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        .call-avatar-container img {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            animation: pulseAvatar 2s infinite;
+        }
+
+        .call-status-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            border: 3px solid white;
+        }
+
+        .call-timer {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 1rem 0;
+        }
+
+        .call-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .call-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .call-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .call-btn.end-call {
+            background: #f44336;
+            color: white;
+        }
+
+        .call-btn.mute {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .call-btn.video {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .call-status {
+            animation: fadeInOut 2s infinite;
+        }
+
+        @keyframes pulseAvatar {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .call-controls-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .call-action-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        .call-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .call-btn.disconnect {
+            background: #dc3545;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        .call-btn.disconnect:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+    </style>
+</head>
+<body>
+    {% include "include/navbar.html" %}
+    
+    <div class="chat-container">
+        <div class="row g-0 h-100">
+            <!-- Chat Sidebar -->
+            <div class="col-md-4 col-lg-3 chat-sidebar">
+                <div class="search-container">
+                    <div class="position-relative">
+                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="search" class="form-control search-box ps-5" placeholder="Search conversations...">
+                    </div>
+                </div>
+                <div class="user-list">
+                    {% for user in chat_users %}
+                        <div class="user-card {% if selected_user.id == user.id %}selected{% endif %}" 
+                             data-user-id="{{ user.id }}"
+                             onclick="selectUser({{ user.id }})">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-container me-3">
+                                    {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture.url }}" class="rounded-circle" width="50" height="50">
+                                    {% else %}
+                                        <img src="{% static 'default/user.png' %}" class="rounded-circle" width="50" height="50">
+                                    {% endif %}
+                                    <span class="status-indicator {% if user.is_mutual_follower %}status-online{% else %}status-away{% endif %}"></span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            {{ user.username }}
+                                            {% if not user.is_mutual_follower %}
+                                                <small class="text-muted">(Chat History)</small>
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">{{ user.last_message_time|default:"" }}</small>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <p class="message-preview text-muted mb-0">{{ user.last_message|default:"Start chatting" }}</p>
+                                        {% if user.unread_count > 0 %}
+                                            <span class="unread-badge">{{ user.unread_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state p-4 text-center">
+                            <img src="/static/empty-chat.png" alt="No conversations" class="mb-3" style="width: 120px; opacity: 0.5;">
+                            <h6 class="text-muted">No Conversations Yet</h6>
+                            <a href="{% url 'users' %}" class="btn btn-sm btn-primary rounded-pill mt-2">
+                                <i class="fas fa-user-plus me-2"></i>Find Users
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Chat Main Area -->
+            <div class="col-md-8 col-lg-9 chat-main">
+                {% if selected_user %}
+                    <div class="chat-header" data-selected-user-id="{{ selected_user.id }}">
+                        <i class="ri-arrow-left-line back-to-users d-none" onclick="toggleSidebar()"></i>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-container me-3">
+                                    {% if selected_user.profile_picture %}
+                                        <img src="{{ selected_user.profile_picture.url }}" class="rounded-circle" width="40" height="40">
+                                    {% else %}
+                                        <img src="/static/default_profile.png" class="rounded-circle" width="40" height="40">
+                                    {% endif %}
+                                    <span class="status-indicator status-online"></span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ selected_user.username }}</h6>
+                                    <div class="user-status">
+                                        <span class="status-indicator status-online"></span>
+                                        <small class="text-muted typing-indicator">
+                                            <span class="typing-dot"></span>
+                                            <span class="typing-dot"></span>
+                                            <span class="typing-dot"></span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="header-actions">
+                                <div class="header-icon" onclick="handleVoiceCall('{{ selected_user.username }}')"><i class="ri-phone-line"></i></div>
+                                <div class="header-icon" onclick="handleVideoCall('{{ selected_user.username }}')"><i class="ri-vidicon-line"></i></div>
+                                <div class="header-icon position-relative" onclick="handleMore(event)">
+                                    <i class="ri-more-2-fill"></i>
+                                    <div class="more-dropdown" id="moreDropdown">
+                                        <div class="more-dropdown-item" onclick="showCallHistory()">
+                                            <i class="ri-history-line"></i>
+                                            Call History
+                                        </div>
+                                        <div class="more-dropdown-item" onclick="showUserInfo()">
+                                            <i class="ri-user-line"></i>
+                                            User Info
+                                        </div>
+                                        <div class="more-dropdown-divider"></div>
+                                        <div class="more-dropdown-item text-danger" onclick="blockUser()">
+                                            <i class="ri-forbid-line"></i>
+                                            Block User
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        {% if selected_user_call_history %}
+                        <div class="call-history">
+                            <h6 class="mb-3">Recent Calls</h6>
+                            {% for call in selected_user_call_history.video_calls %}
+                                <div class="call-item">
+                                    <div class="call-icon video">
+                                        <i class="ri-vidicon-line"></i>
+                                    </div>
+                                    <div class="call-details">
+                                        <div>Video Call {{ call.is_outgoing|yesno:"to,from" }} {{ call.caller_name }}</div>
+                                        <div class="call-time">{{ call.timestamp }}</div>
+                                    </div>
+                                    <div class="call-duration">{{ call.duration }}</div>
+                                </div>
+                            {% endfor %}
+                            {% for call in selected_user_call_history.voice_calls %}
+                                <div class="call-item">
+                                    <div class="call-icon voice">
+                                        <i class="ri-phone-line"></i>
+                                    </div>
+                                    <div class="call-details">
+                                        <div>Voice Call {{ call.is_outgoing|yesno:"to,from" }} {{ call.caller_name }}</div>
+                                        <div class="call-time">{{ call.timestamp }}</div>
+                                    </div>
+                                    <div class="call-duration">{{ call.duration }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="messages-container">
+                            <!-- Existing messages code -->
+                        </div>
+                    </div>
+
+                    <div class="chat-input">
+                        <form class="position-relative" onsubmit="sendMessage(event)">
+                            {% csrf_token %}
+                            <div class="input-actions">
+                                <div class="input-icon"><i class="ri-image-line"></i></div>
+                                <div class="input-icon"><i class="ri-file-line"></i></div>
+                                <div class="input-icon"><i class="ri-emotion-line"></i></div>
+                            </div>
+                            <textarea class="form-control input-message" 
+                                    style="padding-left: 8rem;" 
+                                    placeholder="Type your message..."
+                                    rows="1"></textarea>
+                            <button type="submit" class="btn btn-primary btn-send">
+                                <i class="ri-send-plane-fill me-1"></i>Send
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <div class="text-center">
+                            <div class="display-1 text-muted mb-4">
+                                <i class="ri-message-3-line"></i>
+                            </div>
+                            <h4 class="text-muted mb-3">Start a Conversation</h4>
+                            <p class="text-muted">Select a contact from the left to begin chatting</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+            errorDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            const chatMessages = document.querySelector('.chat-messages');
+            if (chatMessages) {
+                chatMessages.insertBefore(errorDiv, chatMessages.firstChild);
+                setTimeout(() => errorDiv.remove(), 5000); // Remove after 5 seconds
+            }
+        }
+
+        function connectWebSocket(userId) {
+            if (!userId) {
+                console.error('No user ID provided');
+                return null;
+            }
+
+            // Sort the IDs to ensure consistent room names
+            const roomName = [{{ request.user.id }}, userId].sort().join('_');
+            const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+            
+            try {
+                chatSocket = new WebSocket(
+                    `${ws_scheme}://${window.location.host}/ws/chat/${roomName}/`
+                );
+
+                chatSocket.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    
+                    if (data.status === 'error') {
+                        console.error('Message error:', data.error);
+                        showError(data.error);
+                        return;
+                    }
+
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message message-${data.sender === '{{ request.user.username }}' ? 'sent' : 'received'}`;
+                    messageDiv.innerHTML = `
+                        <div class="message-content">${data.message}</div>
+                        <div class="message-time">${data.timestamp}</div>
+                    `;
+                    const chatMessages = document.querySelector('.chat-messages');
+                    if (chatMessages) {
+                        chatMessages.appendChild(messageDiv);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                };
+
+                chatSocket.onclose = function(e) {
+                    console.error('Chat socket closed unexpectedly');
+                    showError('Connection lost. Attempting to reconnect...');
+                    // Attempt to reconnect after 3 seconds
+                    setTimeout(() => connectWebSocket(userId), 3000);
+                };
+
+                chatSocket.onerror = function(e) {
+                    console.error('WebSocket error:', e);
+                    showError('Error connecting to chat server');
+                };
+
+                return chatSocket;
+            } catch (error) {
+                console.error('Error creating WebSocket:', error);
+                showError('Error connecting to chat server');
+                return null;
+            }
+        }
+
+        function loadMessages(userId) {
+            fetch(`/netspace/messages/${userId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') {
+                        showError(data.message);
+                        return;
+                    }
+
+                    const chatMessages = document.querySelector('.chat-messages');
+                    if (!chatMessages) return;
+
+                    chatMessages.innerHTML = ''; // Clear existing messages
+                    data.messages.forEach(msg => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = `message message-${msg.sender === '{{ request.user.username }}' ? 'sent' : 'received'}`;
+                        messageDiv.innerHTML = `
+                            <div class="message-content">${msg.content}</div>
+                            <div class="message-time">${msg.timestamp}</div>
+                        `;
+                        chatMessages.appendChild(messageDiv);
+                    });
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                })
+                .catch(error => {
+                    console.error('Error loading messages:', error);
+                    showError('Failed to load messages. Please try again.');
+                });
+        }
+
+        let currentUserId = null;
+
+        function selectUser(userId) {
+            // Prevent reloading if same user is selected
+            if (currentUserId === userId) {
+                return;
+            }
+            currentUserId = userId;
+
+            // Get user data from the clicked card
+            const userCard = document.querySelector(`[data-user-id="${userId}"]`);
+            if (!userCard) return;
+
+            // Create chat area if it doesn't exist
+            let chatMain = document.querySelector('.chat-main');
+            const username = userCard.querySelector('h6').textContent.trim();
+            const avatar = userCard.querySelector('img').src;
+            
+            chatMain.innerHTML = `
+                <div class="chat-header" data-selected-user-id="${userId}">
+                    <i class="ri-arrow-left-line back-to-users d-none" onclick="toggleSidebar()"></i>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-container me-3">
+                                <img src="${avatar}" class="rounded-circle" width="40" height="40">
+                                <span class="status-indicator status-online"></span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">${username}</h6>
+                                <div class="user-status">
+                                    <span class="status-indicator status-online"></span>
+                                    <small class="text-muted">Online</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="header-actions">
+                            <div class="header-icon" onclick="handleVoiceCall('${username}')"><i class="ri-phone-line"></i></div>
+                            <div class="header-icon" onclick="handleVideoCall('${username}')"><i class="ri-vidicon-line"></i></div>
+                            <div class="header-icon position-relative" onclick="handleMore(event)">
+                                <i class="ri-more-2-fill"></i>
+                                <div class="more-dropdown" id="moreDropdown">
+                                    <div class="more-dropdown-item" onclick="showCallHistory()">
+                                        <i class="ri-history-line"></i>
+                                        Call History
+                                    </div>
+                                    <div class="more-dropdown-item" onclick="showUserInfo()">
+                                        <i class="ri-user-line"></i>
+                                        User Info
+                                    </div>
+                                    <div class="more-dropdown-divider"></div>
+                                    <div class="more-dropdown-item text-danger" onclick="blockUser()">
+                                        <i class="ri-forbid-line"></i>
+                                        Block User
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="text-center p-3"><small class="text-muted">Loading messages...</small></div>
+                </div>
+                <div class="chat-input">
+                    <form class="position-relative" onsubmit="sendMessage(event)">
+                        <div class="input-actions">
+                            <div class="input-icon"><i class="ri-image-line"></i></div>
+                            <div class="input-icon"><i class="ri-file-line"></i></div>
+                            <div class="input-icon"><i class="ri-emotion-line"></i></div>
+                        </div>
+                        <textarea class="form-control input-message" 
+                                style="padding-left: 8rem;" 
+                                placeholder="Type your message..."
+                                rows="1"></textarea>
+                        <button type="submit" class="btn btn-primary btn-send">
+                            <i class="ri-send-plane-fill me-1"></i>Send
+                        </button>
+                    </form>
+                </div>
+            `;
+
+            // Update URL without refreshing page
+            const url = new URL(window.location);
+            url.searchParams.set('user_id', userId);
+            window.history.pushState({}, '', url);
+
+            // Update UI
+            document.querySelectorAll('.user-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            userCard.classList.add('selected');
+
+            // Setup message input events
+            const messageInput = document.querySelector('.input-message');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', handleKeyPress);
+                messageInput.addEventListener('input', function() {
+                    this.style.height = '50px';
+                    this.style.height = (this.scrollHeight) + 'px';
+                });
+            }
+
+            // Connect WebSocket and load messages
+            if (chatSocket) {
+                chatSocket.close();
+            }
+            chatSocket = connectWebSocket(userId);
+            setTimeout(() => loadMessages(userId), 500);
+
+            // Add call history section to chat area
+            fetch(`/netspace/call/history/${userId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const callHistory = document.createElement('div');
+                    callHistory.className = 'call-history';
+                    if (data.video_calls.length > 0 || data.voice_calls.length > 0) {
+                        const calls = [...data.video_calls, ...data.voice_calls].sort(
+                            (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+                        );
+                        
+                        callHistory.innerHTML = `
+                            <h6 class="mb-3">Recent Calls</h6>
+                            ${calls.map(call => `
+                                <div class="call-item">
+                                    <div class="call-icon ${call.call_type}">
+                                        <i class="ri-${call.call_type === 'video' ? 'vidicon' : 'phone'}-line"></i>
+                                    </div>
+                                    <div class="call-details">
+                                        <div>${call.call_type === 'video' ? 'Video' : 'Voice'} Call 
+                                            ${call.is_outgoing ? `to ${call.receiver_name}` : `from ${call.caller_name}`}
+                                        </div>
+                                        <div class="call-time">${call.timestamp}</div>
+                                    </div>
+                                    <div class="call-duration">
+                                        ${call.duration === 'N/A' ? 'Missed' : call.duration}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        `;
+                        
+                        const messagesContainer = document.getElementById('chatMessages');
+                        // Insert call history at the top
+                        messagesContainer.insertBefore(callHistory, messagesContainer.firstChild);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading call history:', error);
+                    showError('Failed to load call history');
+                });
+        }
+
+        function updateChatHeader(userId) {
+            const user = Array.from(document.querySelectorAll('.user-card')).find(
+                card => card.dataset.userId === userId.toString()
+            );
+            
+            if (user) {
+                const username = user.querySelector('h6').textContent;
+                const avatar = user.querySelector('img').src;
+                
+                const headerHtml = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-container me-3">
+                                <img src="${avatar}" class="rounded-circle" width="40" height="40">
+                                <span class="status-indicator status-online"></span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">${username}</h6>
+                                <div class="user-status">
+                                    <span class="status-indicator status-online"></span>
+                                    <small class="text-muted">Online</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="header-actions">
+                            <div class="header-icon" onclick="handleVoiceCall('${username}')"><i class="ri-phone-line"></i></div>
+                            <div class="header-icon" onclick="handleVideoCall('${username}')"><i class="ri-vidicon-line"></i></div>
+                            <div class="header-icon position-relative" onclick="handleMore(event)">
+                                <i class="ri-more-2-fill"></i>
+                                <div class="more-dropdown" id="moreDropdown">
+                                    <div class="more-dropdown-item" onclick="showCallHistory()">
+                                        <i class="ri-history-line"></i>
+                                        Call History
+                                    </div>
+                                    <div class="more-dropdown-item" onclick="showUserInfo()">
+                                        <i class="ri-user-line"></i>
+                                        User Info
+                                    </div>
+                                    <div class="more-dropdown-divider"></div>
+                                    <div class="more-dropdown-item text-danger" onclick="blockUser()">
+                                        <i class="ri-forbid-line"></i>
+                                        Block User
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.querySelector('.chat-header').innerHTML = headerHtml;
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage(event);
+            }
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            const messageInput = document.querySelector('.input-message');
+            const content = messageInput.value.trim();
+            const receiverIdElement = document.querySelector('[data-selected-user-id]');
+            const receiverId = receiverIdElement ? receiverIdElement.dataset.selectedUserId : '';
+
+            if (!content) {
+                showError('Please enter a message');
+                return;
+            }
+
+            if (!receiverId) {
+                showError('No chat recipient selected');
+                return;
+            }
+
+            if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
+                showError('Chat connection is not open. Please try again.');
+                console.error('Cannot send message:', {
+                    hasSocket: !!chatSocket,
+                    socketState: chatSocket ? chatSocket.readyState : 'no socket'
+                });
+
+                // Try to reconnect
+                chatSocket = connectWebSocket(receiverId);
+                setTimeout(() => {
+                    if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                        sendMessage(event);
+                    }
+                }, 1000);
+                return;
+            }
+
+            try {
+                chatSocket.send(JSON.stringify({
+                    'message': content,
+                    'receiver_id': receiverId
+                }));
+
+                // Clear input and reset height
+                messageInput.value = '';
+                messageInput.style.height = '50px';
+                messageInput.focus();
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showError('Failed to send message. Please try again.');
+            }
+        }
+
+        function appendMessage(content, isSent, timestamp) {
+            const chatMessages = document.querySelector('.chat-messages');
+            if (!chatMessages) return;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${isSent ? 'sent' : 'received'}`;
+            messageDiv.innerHTML = `
+                <div class="message-content">${content}</div>
+                <div class="message-time">${timestamp}</div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageInput = document.querySelector('.input-message');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', handleKeyPress);
+                messageInput.addEventListener('input', function() {
+                    this.style.height = '50px';
+                    this.style.height = (this.scrollHeight) + 'px';
+                });
+            }
+
+            // Initialize chat if user_id is in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialUserId = urlParams.get('user_id');
+            if (initialUserId) {
+                selectUser(initialUserId);
+            }
+        });
+
+        let chatSocket;
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.chat-sidebar');
+            const body = document.body;
+            
+            if (window.innerWidth <= 767.98) {
+                sidebar.classList.toggle('active');
+                body.classList.toggle('sidebar-active');
+            }
+        }
+
+        // Update selectUser function to handle mobile view
+        const originalSelectUser = selectUser;
+        selectUser = function(userId) {
+            originalSelectUser(userId);
+            if (window.innerWidth <= 767.98) {
+                toggleSidebar();
+            }
+        }
+
+        // Handle back button
+        window.addEventListener('popstate', function(event) {
+            if (window.innerWidth <= 767.98) {
+                const sidebar = document.querySelector('.chat-sidebar');
+                if (!sidebar.classList.contains('active')) {
+                    toggleSidebar();
+                }
+            }
+        });
+
+        function showFeatureModal(title, message) {
+            const modal = new bootstrap.Modal(document.getElementById('featureModal'));
+            document.getElementById('featureModalTitle').textContent = title;
+            document.getElementById('featureModalMessage').textContent = message;
+            modal.show();
+        }
+
+        function handleVoiceCall(username) {
+            showFeatureModal(
+                'Voice Call Coming Soon',
+                `Voice calling feature with ${username} will be available in the next update.`
+            );
+        }
+
+        function handleVideoCall(username) {
+            showFeatureModal(
+                'Video Call Coming Soon',
+                `Video calling feature with ${username} will be available in the next update.`
+            );
+        }
+
+        function handleMore(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('moreDropdown');
+            dropdown.classList.toggle('show');
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function closeDropdown(e) {
+                if (!dropdown.contains(e.target) && !e.target.closest('.header-icon')) {
+                    dropdown.classList.remove('show');
+                    document.removeEventListener('click', closeDropdown);
+                }
+            });
+        }
+
+        function showCallHistory() {
+            const userId = document.querySelector('.chat-header').dataset.selectedUserId;
+            fetch(`/netspace/call/history/${userId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const callsHtml = [...data.video_calls, ...data.voice_calls]
+                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                        .map(call => `
+                            <div class="call-item">
+                                <div class="call-icon ${call.call_type}">
+                                    <i class="ri-${call.call_type === 'video' ? 'vidicon' : 'phone'}-line"></i>
+                                </div>
+                                <div class="call-details">
+                                    <div>${call.call_type === 'video' ? 'Video' : 'Voice'} Call 
+                                        ${call.is_outgoing ? `to ${call.receiver_name}` : `from ${call.caller_name}`}
+                                    </div>
+                                    <div class="call-time">${call.timestamp}</div>
+                                </div>
+                                <div class="call-duration">${call.duration === 'N/A' ? 'Missed' : call.duration}</div>
+                            </div>
+                        `).join('');
+
+                    showFeatureModal('Call History', `
+                        <div class="call-history p-0">
+                            ${callsHtml || '<p class="text-muted">No call history found</p>'}
+                        </div>
+                    `);
+                });
+        }
+
+        function showUserInfo() {
+            const userId = document.querySelector('.chat-header').dataset.selectedUserId;
+            fetch(`/netspace/user/${userId}/info/`)
+                .then(response => response.json())
+                .then(data => {
+                    showFeatureModal('User Info', `
+                        <div class="text-start">
+                            <p><strong>Username:</strong> ${data.username}</p>
+                            <p><strong>Joined:</strong> ${data.joined_date}</p>
+                            <p><strong>Status:</strong> ${data.is_online ? 'Online' : 'Offline'}</p>
+                            <p><strong>Mutual Friends:</strong> ${data.mutual_friends}</p>
+                        </div>
+                    `);
+                });
+        }
+
+        function blockUser() {
+            const userId = document.querySelector('.chat-header').dataset.selectedUserId;
+            const username = document.querySelector('.chat-header h6').textContent;
+            
+            // Show block user modal instead of confirm
+            const blockModal = new bootstrap.Modal(document.getElementById('blockUserModal'));
+            blockModal.show();
+        }
+
+        function submitBlockUser() {
+            const userId = document.querySelector('.chat-header').dataset.selectedUserId;
+            const form = document.getElementById('blockUserForm');
+            const formData = new FormData(form);
+            
+            fetch('/netspace/user/block/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    blocked_user_id: userId,
+                    block_type: formData.get('block_type'),
+                    reason: formData.get('reason'),
+                    duration: formData.get('duration'),
+                    is_permanent: formData.get('duration') === 'permanent'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Hide block modal
+                    bootstrap.Modal.getInstance(document.getElementById('blockUserModal')).hide();
+                    
+                    // Show success message
+                    showFeatureModal('User Blocked', data.message);
+                    
+                    // Refresh chat list after short delay
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showError(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error blocking user:', error);
+                showError('Failed to block user. Please try again.');
+            });
+        }
+
+        // Add this to existing error handling
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+            errorDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.modal-body').insertBefore(errorDiv, document.querySelector('.modal-body').firstChild);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        // Add these functions in your existing script section
+        let currentCall = null;
+        let callSocket = null;
+
+        function handleVoiceCall(username) {
+            initiateCall('voice', username);
+        }
+
+        function handleVideoCall(username) {
+            initiateCall('video', username);
+        }
+
+        function initiateCall(type, username) {
+            const userId = document.querySelector('.chat-header').dataset.selectedUserId;
+            if (!userId) {
+                showError('No user selected for call');
+                return;
+            }
+
+            fetch('/netspace/call/initiate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    receiver_id: userId,
+                    call_type: type
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentCall = {
+                        id: data.call_id,
+                        type: type,
+                        startTime: new Date()
+                    };
+                    showCallModal(type, username);
+                    setupCallSocket(data.call_id);
+                } else {
+                    showError(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error initiating call:', error);
+                showError('Failed to initiate call');
+            });
+        }
+
+        function setupCallSocket(callId) {
+            const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+            callSocket = new WebSocket(
+                `${ws_scheme}://${window.location.host}/ws/call/${callId}/`
+            );
+
+            callSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                handleCallSocketMessage(data);
+            };
+
+            callSocket.onclose = function(e) {
+                console.log('Call socket closed');
+                endCall();
+            };
+        }
+
+        function handleCallSocketMessage(data) {
+            if (data.type === 'call_accepted') {
+                showCallControls();
+            } else if (data.type === 'call_ended') {
+                endCall();
+            }
+        }
+
+        function showCallModal(type, username) {
+            const modal = new bootstrap.Modal(document.getElementById('callModal'));
+            document.getElementById('callStatusText').textContent = `Calling ${username}...`;
+            modal.show();
+        }
+
+        function showCallControls() {
+            document.getElementById('callStatus').classList.add('d-none');
+            document.getElementById('callControls').classList.remove('d-none');
+        }
+
+        function endCall(callId = null) {
+            const callIdToEnd = callId || (currentCall ? currentCall.id : null);
+            if (!callIdToEnd) return;
+
+            fetch('/netspace/call/end/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    call_id: callIdToEnd,
+                    duration: currentCall ? new Date() - currentCall.startTime : 0
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Close any open call modals
+                    ['callModal', 'activeCallModal', 'incomingCallModal'].forEach(modalId => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+                        if (modal) modal.hide();
+                    });
+
+                    // Clear timers
+                    if (currentCall && currentCall.timer) {
+                        clearInterval(currentCall.timer);
+                    }
+                    if (activeCallTimer) {
+                        clearInterval(activeCallTimer);
+                    }
+                }
+            })
+            .catch(error => console.error('Error ending call:', error))
+            .finally(() => {
+                // Clean up socket and state
+                if (callSocket) {
+                    callSocket.close();
+                }
+                currentCall = null;
+                currentIncomingCall = null;
+                stopRingtone();
+            });
+        }
+
+        function endActiveCall() {
+            if (activeCallTimer) {
+                clearInterval(activeCallTimer);
+            }
+            endCall(currentCall ? currentCall.id : null);
+        }
+
+        function handleCallEnded(data) {
+            if (data.call_id === (currentCall ? currentCall.id : null) || 
+                data.call_id === (currentIncomingCall ? currentIncomingCall.call_id : null)) {
+                endCall(data.call_id);
+            }
+        }
+
+        function getCookie(name) {
+            let value = `; ${document.cookie}`;
+            let parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // Add this modal for incoming calls
+        function setupCallSocket() {
+            const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+            const userId = {{ request.user.id }};
+            
+            if (callSocket && callSocket.readyState === WebSocket.OPEN) {
+                callSocket.close();
+            }
+
+            callSocket = new WebSocket(
+                `${ws_scheme}://${window.location.host}/ws/call/user/${userId}/`
+            );
+
+            callSocket.onopen = function() {
+                console.log('Call socket connected successfully');
+            };
+
+            callSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log('Call socket received:', data);
+                
+                if (data.type === 'incoming_call') {
+                    showIncomingCallUI(data);
+                } else if (data.type === 'call_response') {
+                    handleCallResponse(data);
+                }
+            };
+
+            callSocket.onerror = function(e) {
+                console.error('Call socket error:', e);
+            };
+
+            callSocket.onclose = function() {
+                console.log('Call socket closed, reconnecting...');
+                setTimeout(setupCallSocket, 3000);
+            };
+        }
+
+        function showIncomingCallUI(data) {
+            currentIncomingCall = data;
+            const modal = new bootstrap.Modal(document.getElementById('incomingCallModal'));
+            document.getElementById('incomingCallText').textContent = 
+                `Incoming ${data.call_type} call from ${data.caller_name}`;
+            modal.show();
+        }
+
+        function acceptCall() {
+            if (!currentIncomingCall) return;
+            
+            callSocket.send(JSON.stringify({
+                type: 'call_response',
+                accepted: true,
+                call_id: currentIncomingCall.call_id,
+                caller_id: currentIncomingCall.caller_id
+            }));
+            
+            // Hide incoming call modal and show call modal
+            bootstrap.Modal.getInstance(document.getElementById('incomingCallModal')).hide();
+            showCallModal(currentIncomingCall.call_type, currentIncomingCall.caller_name);
+            currentCall = {
+                id: currentIncomingCall.call_id,
+                type: currentIncomingCall.call_type,
+                startTime: new Date()
+            };
+        }
+
+        function rejectCall() {
+            if (!currentIncomingCall) return;
+            
+            callSocket.send(JSON.stringify({
+                type: 'call_response',
+                accepted: false,
+                call_id: currentIncomingCall.call_id,
+                caller_id: currentIncomingCall.caller_id
+            }));
+            
+            bootstrap.Modal.getInstance(document.getElementById('incomingCallModal')).hide();
+            currentIncomingCall = null;
+        }
+
+        // Initialize call socket when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // ...existing code...
+            setupCallSocket();
+        });
+    </script>
+
+    <div class="modal fade" id="featureModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <i class="ri-information-line display-4 text-primary mb-3"></i>
+                    <h5 class="modal-title mb-3" id="featureModalTitle">Feature Coming Soon</h5>
+                    <p class="text-muted mb-0" id="featureModalMessage"></p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="callModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content call-modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="call-avatar-container mb-4">
+                        <img id="callUserAvatar" src="" class="rounded-circle w-100 h-100">
+                        <div class="call-status-indicator"></div>
+                    </div>
+                    <h4 id="callUserName" class="text-white mb-2"></h4>
+                    
+                    <div class="call-controls-container">
+                        <div id="callStatus" class="call-status mb-4">
+                            <div class="spinner-grow text-light mb-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mb-0" id="callStatusText">Calling...</p>
+                            <div class="call-timer mt-2">
+                                <span id="callDuration">00:00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="call-action-buttons">
+                            <button class="call-btn mute" id="toggleMute" title="Mute">
+                                <i class="ri-mic-line"></i>
+                            </button>
+                            <button class="call-btn disconnect" onclick="endCall()" title="End Call">
+                                <i class="ri-phone-off-line"></i>
+                            </button>
+                            <button class="call-btn video" id="toggleVideo" title="Video">
+                                <i class="ri-video-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="incomingCallModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content call-modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="incoming-call-animation mb-4">
+                        <div class="ripple"></div>
+                        <div class="call-avatar-container">
+                            <img id="callerAvatar" src="" class="rounded-circle w-100 h-100">
+                            <div class="call-status-indicator"></div>
+                        </div>
+                    </div>
+                    <h4 id="callerName" class="text-white mb-2"></h4>
+                    <p id="incomingCallText" class="text-white-50 mb-4"></p>
+                    <div class="call-action-buttons">
+                        <button class="call-btn mute" onclick="acceptCall()" title="Accept">
+                            <i class="ri-phone-line"></i>
+                        </button>
+                        <button class="call-btn disconnect" onclick="rejectCall()" title="Reject">
+                            <i class="ri-phone-off-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="blockUserModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Block User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="blockUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">Block Type</label>
+                            <select class="form-select" name="block_type" required>
+                                <option value="harassment">Harassment</option>
+                                <option value="spam">Spam</option>
+                                <option value="inappropriate">Inappropriate Content</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Block Duration</label>
+                            <select class="form-select" name="duration">
+                                <option value="1d">1 Day</option>
+                                <option value="7d">1 Week</option>
+                                <option value="30d">1 Month</option>
+                                <option value="permanent">Permanent</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason</label>
+                            <textarea class="form-control" name="reason" rows="3" required></textarea>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" onclick="submitBlockUser()">Block User</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ...existing code...
+
+        let ringtone;
+
+        function playRingtone() {
+            ringtone = new Audio('/static/sounds/ringtone.mp3');
+            ringtone.loop = true;
+            ringtone.play().catch(error => console.log('Error playing ringtone:', error));
+        }
+
+        function stopRingtone() {
+            if (ringtone) {
+                ringtone.pause();
+                ringtone.currentTime = 0;
+            }
+        }
+
+        // Initialize call socket when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCallSocket();
+        });
+    </script>
+    <script>
+        // ...existing code...
+
+        function setupCallSocket() {
+            const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+            const userId = {{ request.user.id }};
+            
+            if (callSocket && callSocket.readyState === WebSocket.OPEN) {
+                callSocket.close();
+            }
+
+            callSocket = new WebSocket(
+                `${ws_scheme}://${window.location.host}/ws/call/user/${userId}/`
+            );
+
+            callSocket.onopen = function() {
+                console.log('Call socket connected successfully');
+            };
+
+            callSocket.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    console.log('Call socket received:', data);
+                    
+                    if (data.type === 'incoming_call') {
+                        showIncomingCallUI(data);
+                    } else if (data.type === 'call_response') {
+                        handleCallResponse(data);
+                    }
+                } catch (error) {
+                    console.error('Error processing message:', error);
+                }
+            };
+
+            // ... rest of setupCallSocket remains same ...
+        }
+
+        function showIncomingCallUI(data) {
+            try {
+                if (!data || !data.caller_id) {
+                    console.error('Invalid incoming call data');
+                    return;
+                }
+
+                currentIncomingCall = data;
+                
+                // Update modal content
+                const callerAvatar = document.getElementById('callerAvatar');
+                const callerName = document.getElementById('callerName');
+                const callText = document.getElementById('incomingCallText');
+                
+                if (callerAvatar && callerName && callText) {
+                    callerAvatar.src = data.caller_avatar || "{% static 'default/user.png' %}";
+                    callerName.textContent = data.caller_name;
+                    callText.textContent = `Incoming ${data.call_type} Call`;
+                    
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('incomingCallModal'));
+                    modal.show();
+                    
+                    // Play ringtone
+                    playRingtone();
+
+                    // Auto reject after 30 seconds
+                    setTimeout(() => {
+                        if (currentIncomingCall && currentIncomingCall.call_id === data.call_id) {
+                            rejectCall();
+                        }
+                    }, 30000);
+                }
+            } catch (error) {
+                console.error('Error showing incoming call UI:', error);
+            }
+        }
+
+        // Add this function to handle call responses
+        function handleCallResponse(data) {
+            if (data.accepted) {
+                // Update UI for accepted call
+                showActiveCallUI({
+                    id: currentIncomingCall.call_id,
+                    type: currentIncomingCall.call_type,
+                    other_user: {
+                        username: currentIncomingCall.caller_name,
+                        avatar: currentIncomingCall.caller_avatar
+                    },
+                    start_time: new Date().toISOString()
+                });
+            } else {
+                // Handle rejected call
+                endCall();
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCallSocket();
+            // ...existing code...
+        });
+
+        document.getElementById('toggleMute').addEventListener('click', function() {
+            this.classList.toggle('active');
+            const icon = this.querySelector('i');
+            if (this.classList.contains('active')) {
+                icon.classList.replace('ri-mic-line', 'ri-mic-off-line');
+                this.style.background = '#f44336';
+            } else {
+                icon.classList.replace('ri-mic-off-line', 'ri-mic-line');
+                this.style.background = 'rgba(255, 255, 255, 0.2)';
+            }
+        });
+
+        document.getElementById('toggleVideo').addEventListener('click', function() {
+            this.classList.toggle('active');
+            const icon = this.querySelector('i');
+            if (this.classList.contains('active')) {
+                icon.classList.replace('ri-video-line', 'ri-video-off-line');
+                this.style.background = '#f44336';
+            } else {
+                icon.classList.replace('ri-video-off-line', 'ri-video-line');
+                this.style.background = 'rgba(255, 255, 255, 0.2)';
+            }
+        });
+    </script>
+
+    <!-- Add this after your existing modals -->
+    <div class="modal fade" id="activeCallModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content call-modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="call-avatar-container mb-4">
+                        <img id="activeCallUserAvatar" src="" class="rounded-circle w-100 h-100">
+                        <div class="call-status-indicator status-online"></div>
+                    </div>
+                    <h4 id="activeCallUserName" class="text-white mb-2"></h4>
+                    
+                    <div class="call-controls-container">
+                        <div class="call-status active-call mb-4">
+                            <div class="call-timer">
+                                <span id="activeCallDuration">00:00</span>
+                            </div>
+                            <p class="text-white-50 mb-0">Active Call</p>
+                        </div>
+                        
+                        <div class="call-action-buttons">
+                            <button class="call-btn mute" id="activeCallToggleMute" title="Mute">
+                                <i class="ri-mic-line"></i>
+                            </button>
+                            <button class="call-btn disconnect" onclick="endActiveCall()" title="End Call">
+                                <i class="ri-phone-off-line"></i>
+                            </button>
+                            <button class="call-btn video" id="activeCallToggleVideo" title="Video">
+                                <i class="ri-video-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this to your existing JavaScript -->
+    <script>
+        // Add this to your existing code
+        let activeCallTimer;
+        let activeCallStartTime;
+        
+        function checkActiveCall() {
+            fetch('/netspace/call/active/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showActiveCallUI(data.call);
+                    }
+                });
+        }
+        
+        function showActiveCallUI(call) {
+            const modal = new bootstrap.Modal(document.getElementById('activeCallModal'));
+            const avatar = document.getElementById('activeCallUserAvatar');
+            const username = document.getElementById('activeCallUserName');
+            
+            avatar.src = call.other_user.avatar || "{% static 'default/user.png' %}";
+            username.textContent = call.other_user.username;
+            
+            activeCallStartTime = new Date(call.start_time);
+            startCallTimer();
+            
+            modal.show();
+        }
+        
+        function startCallTimer() {
+            if (activeCallTimer) {
+                clearInterval(activeCallTimer);
+            }
+            
+            const durationElement = document.getElementById('activeCallDuration');
+            
+            activeCallTimer = setInterval(() => {
+                const now = new Date();
+                const duration = now - activeCallStartTime;
+                const minutes = Math.floor(duration / 60000);
+                const seconds = Math.floor((duration % 60000) / 1000);
+                durationElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function endActiveCall() {
+            if (activeCallTimer) {
+                clearInterval(activeCallTimer);
+            }
+            
+            // Hide the active call modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('activeCallModal'));
+            modal.hide();
+            
+            // Send end call request to server
+            // ... existing endCall logic ...
+        }
+        
+        // Check for active call when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            checkActiveCall();
+        });
+    </script>
+    <script>
+    // Add or update these functions in your JavaScript
+    function initiateCall(type, username) {
+        const userId = document.querySelector('.chat-header').dataset.selectedUserId;
+        if (!userId) {
+            showError('No user selected for call');
+            return;
+        }
+
+        showCallModal(type, username, true); // Show calling state immediately
+
+        fetch('/netspace/call/initiate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                receiver_id: userId,
+                call_type: type
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                currentCall = {
+                    id: data.call.id,
+                    type: type,
+                    startTime: new Date(),
+                    receiverId: userId
+                };
+                setupCallSocket(data.call.id);
+                updateCallUI(data.call);
+            } else {
+                endCall();
+                showError(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error initiating call:', error);
+            endCall();
+            showError('Failed to initiate call');
+        });
+    }
+
+    function showCallModal(type, username, isOutgoing = true) {
+        const modal = new bootstrap.Modal(document.getElementById('callModal'));
+        const avatar = document.querySelector(`[data-user-id="${currentUserId}"] img`).src;
+        
+        document.getElementById('callUserAvatar').src = avatar;
+        document.getElementById('callUserName').textContent = username;
+        document.getElementById('callStatusText').textContent = isOutgoing ? `Calling ${username}...` : 'Connecting...';
+        document.getElementById('callDuration').textContent = '00:00';
+        
+        // Show/hide appropriate controls
+        document.getElementById('callStatus').classList.remove('d-none');
+        document.getElementById('callControls') && document.getElementById('callControls').classList.add('d-none');
+        
+        modal.show();
+    }
+
+    function updateCallUI(callData) {
+        const statusText = document.getElementById('callStatusText');
+        const callTimer = document.querySelector('.call-timer');
+        
+        switch(callData.status) {
+            case 'initiating':
+                statusText.textContent = 'Calling...';
+                callTimer.style.display = 'none';
+                break;
+            case 'active':
+                statusText.textContent = 'Connected';
+                callTimer.style.display = 'block';
+                startCallTimer();
+                break;
+            case 'ended':
+                statusText.textContent = 'Call ended';
+                callTimer.style.display = 'none';
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('callModal')).hide();
+                }, 1000);
+                break;
+        }
+    }
+
+    function setupCallSocket(callId) {
+        const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        
+        if (callSocket && callSocket.readyState === WebSocket.OPEN) {
+            callSocket.close();
+        }
+
+        callSocket = new WebSocket(
+            `${ws_scheme}://${window.location.host}/ws/call/${callId}/`
+        );
+
+        callSocket.onopen = function() {
+            console.log('Call socket connected');
+        };
+
+        callSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            handleCallSocketMessage(data);
+        };
+
+        callSocket.onerror = function(e) {
+            console.error('Call socket error:', e);
+            showError('Call connection error');
+            endCall();
+        };
+
+        callSocket.onclose = function() {
+            if (currentCall && currentCall.status !== 'ended') {
+                endCall();
+            }
+        };
+    }
+
+    function handleCallSocketMessage(data) {
+        switch(data.type) {
+            case 'call_status':
+                updateCallUI(data);
+                break;
+            case 'call_accepted':
+                startActiveCall(data);
+                break;
+            case 'call_rejected':
+                handleCallRejected(data);
+                break;
+            case 'call_ended':
+                handleCallEnded(data);
+                break;
+        }
+    }
+
+    function startCallTimer() {
+        if (currentCall.timer) clearInterval(currentCall.timer);
+        
+        const startTime = new Date();
+        const durationElement = document.getElementById('callDuration');
+        
+        currentCall.timer = setInterval(() => {
+            const duration = new Date() - startTime;
+            const minutes = Math.floor(duration / 60000);
+            const seconds = Math.floor((duration % 60000) / 1000);
+            durationElement.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
+    }
+// ...existing code...
+</script>
+<script>
+    function setupCallSocket() {
+        const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const userId = {{ request.user.id }};
+        
+        try {
+            if (callSocket && callSocket.readyState === WebSocket.OPEN) {
+                callSocket.close();
+            }
+
+            callSocket = new WebSocket(
+                `${ws_scheme}://${window.location.host}/ws/call/user/${userId}/`
+            );
+
+            callSocket.onopen = function() {
+                console.log('Call socket connected successfully');
+                // Send a ping to keep connection alive
+                setInterval(() => {
+                    if (callSocket.readyState === WebSocket.OPEN) {
+                        callSocket.send(JSON.stringify({ type: 'ping' }));
+                    }
+                }, 30000);
+            };
+
+            callSocket.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    console.log('Call socket received:', data);
+                    
+                    if (data.type === 'incoming_call') {
+                        stopRingtone(); // Stop any existing ringtone
+                        currentIncomingCall = data;
+                        showIncomingCallUI(data);
+                    } else if (data.type === 'call_response') {
+                        handleCallResponse(data);
+                    } else if (data.type === 'call_ended') {
+                        handleCallEnded(data);
+                    }
+                } catch (error) {
+                    console.error('Error processing message:', error);
+                }
+            };
+
+            callSocket.onerror = function(e) {
+                console.error('Call socket error:', e);
+            };
+
+            callSocket.onclose = function() {
+                console.log('Call socket closed, reconnecting...');
+                setTimeout(setupCallSocket, 3000);
+            };
+        } catch (error) {
+            console.error('Error in setupCallSocket:', error);
+        }
+    }
+
+    function showIncomingCallUI(data) {
+        try {
+            if (!data || !data.caller_id) {
+                console.error('Invalid incoming call data');
+                return;
+            }
+
+            // Close any existing call modals
+            const existingModal = bootstrap.Modal.getInstance(document.getElementById('incomingCallModal'));
+            if (existingModal) {
+                existingModal.hide();
+            }
+
+            // Update modal content
+            const callerAvatar = document.getElementById('callerAvatar');
+            const callerName = document.getElementById('callerName');
+            const callText = document.getElementById('incomingCallText');
+            
+            if (callerAvatar && callerName && callText) {
+                callerAvatar.src = data.caller_avatar || "/static/default/user.png";
+                callerName.textContent = data.caller_name;
+                callText.textContent = `Incoming ${data.call_type} Call`;
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('incomingCallModal'));
+                modal.show();
+                
+                // Play ringtone
+                playRingtone();
+
+                // Auto reject after 30 seconds
+                setTimeout(() => {
+                    if (currentIncomingCall && currentIncomingCall.call_id === data.call_id) {
+                        rejectCall();
+                    }
+                }, 30000);
+            }
+        } catch (error) {
+            console.error('Error showing incoming call UI:', error);
+        }
+    }
+
+    function handleCallResponse(data) {
+        if (data.accepted) {
+            stopRingtone();
+            const incomingModal = bootstrap.Modal.getInstance(document.getElementById('incomingCallModal'));
+            if (incomingModal) incomingModal.hide();
+            
+            showActiveCallUI({
+                id: currentIncomingCall.call_id,
+                type: currentIncomingCall.call_type,
+                other_user: {
+                    username: currentIncomingCall.caller_name,
+                    avatar: currentIncomingCall.caller_avatar
+                },
+                start_time: new Date().toISOString()
+            });
+        } else {
+            endCall();
+        }
+    }
+
+    // Initialize everything when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        setupCallSocket();
+        checkActiveCall();
+
+        // Keep socket alive when tab is visible
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                setupCallSocket();
+            }
+        });
+
+        // Reconnect socket on network changes
+        window.addEventListener('online', setupCallSocket);
+    });
+
+</script>
+</body>
+</html>

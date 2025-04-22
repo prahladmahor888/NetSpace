@@ -1,0 +1,1566 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Document</title>
+    <style>
+        :root {
+            --primary-color: #0095f6;
+            --secondary-color: #00c6ff;
+            --border-color: #dbdbdb;
+            --text-color: #262626;
+            --bg-color: #fafafa;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .profile-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: var(--bg-color);
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .profile-header {
+            display: flex;
+            margin-bottom: 44px;
+            gap: 30px;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+            transition: box-shadow 0.3s ease;
+            animation: scaleIn 0.5s ease-out;
+        }
+        
+        .profile-header:hover {
+            box-shadow: var(--hover-shadow);
+        }
+        
+        .profile-image {
+            width: 180px;
+            height: 180px;
+            flex-shrink: 0;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .profile-image img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            border: 4px solid white;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .profile-image img:hover {
+            transform: scale(1.05);
+        }
+        
+        .story-upload-hint {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .profile-image:hover .story-upload-hint {
+            opacity: 1;
+        }
+        
+        .profile-info {
+            flex: 1;
+        }
+        
+        .profile-title {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .profile-title h1 {
+            font-size: 32px;
+            font-weight: 600;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(4px);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .edit-btn {
+            background: #efefef;
+        }
+        
+        .follow-btn {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .unfollow-btn {
+            background: #efefef;
+        }
+        
+        .message-btn {
+            background: #fff;
+            border: 1px solid #dbdbdb;
+        }
+        
+        .profile-stats {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .profile-stats span {
+            font-size: 16px;
+        }
+        
+        .profile-stats strong {
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+        
+        .profile-bio {
+            max-width: 600px;
+        }
+        
+        .profile-bio h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .content-tabs {
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid #dbdbdb;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            margin: 30px 0;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .tab {
+            border: none;
+            background: none;
+            padding: 12px 30px;
+            margin: 0 30px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+        
+        .tab:hover {
+            background: rgba(0, 149, 246, 0.1);
+        }
+        
+        .tab.active {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+            animation: scaleIn 0.3s ease-out;
+        }
+        
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+    
+        
+        @media (max-width: 935px) {
+            .profile-container {
+                padding: 15px;
+            }
+            
+            .profile-header {
+                padding: 20px;
+            }
+        }
+        
+        /* Loading animation */
+        .loading {
+            position: relative;
+            min-height: 200px;
+        }
+        
+        
+        /* Followers Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            border-radius: 16px;
+            overflow: hidden;
+            animation: scaleIn 0.3s ease;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        
+        .followers-list {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+        
+        .follower-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            gap: 15px;
+        }
+        
+        .follower-item img {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .follower-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .follower-info strong {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        
+        .follower-info span {
+            font-size: 13px;
+            color: #8e8e8e;
+        }
+        
+        .view-profile-btn {
+            padding: 6px 16px;
+            font-size: 12px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .view-profile-btn:hover {
+            background: var(--bg-color);
+        }
+        
+        .stat-item {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .stat-item:hover {
+            opacity: 0.8;
+        }
+        
+        
+        /* Add these styles to your existing CSS */
+        .follow-btn, .unfollow-btn {
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .follow-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .follow-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .unfollow-btn {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .unfollow-btn:hover {
+            background: #ffebee;
+            color: #d32f2f;
+            border-color: #d32f2f;
+        }
+
+        .button-pop {
+            animation: pop 0.2s ease;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Update the button styles */
+        .follow-btn {
+            background: var(--primary-color);
+            color: white !important;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .follow-btn:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(140, 26, 246, 0.15);
+        }
+
+        .unfollow-btn {
+            background: white;
+            color: var(--primary) !important;
+            border: 2px solid var(--primary);
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .unfollow-btn:hover {
+            background: #ffebee;
+            color: #d32f2f !important;
+            border-color: #d32f2f;
+        }
+
+        .button-pop {
+            animation: pop 0.2s ease;
+        }
+
+
+        /* post show styling */
+
+        .image-pfp {
+            margin-right: 10px;
+        }
+        .pfp {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+        }
+
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 12px;
+            font-size: 24px;
+            border-radius: 50%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-button:hover {
+            background-color: #e9ecef;
+        }
+
+        .icon-button i {
+            font-size: 20px;
+            color: #007bff;
+        }
+
+        #file-icon {
+            color: #007bff;
+            font-size: 45px;
+            
+        }
+
+        .share-button {
+            background-color: #007bff;
+            color: white;
+            min-width: 40px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .share-button:hover {
+            background-color: #0056b3;
+        }
+
+        .share-button i {
+            color: white;
+        }
+
+        /* Responsive styles */
+        @media screen and (max-width: 768px) {
+            .post-form {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+                padding: 15px;
+            }
+
+            .flex-grow textarea {
+                font-size: 14px;
+            }
+
+            .icon-button {
+                padding: 8px;
+                font-size: 20px;
+            }
+
+            #file-icon {
+                font-size: 35px;
+            }
+
+            .share-button {
+                min-width: 35px;
+                min-height: 35px;
+            }
+            .share-button i {
+                font-size: 16px;
+            }
+
+            .pfp {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .post-form {
+                padding: 10px;
+            }
+
+            .flex-grow textarea {
+                font-size: 12px;
+            }
+
+            .icon-button {
+                padding: 6px;
+                font-size: 18px;
+            }
+
+            #file-icon {
+                font-size: 30px;
+            }
+
+            .share-button {
+                min-width: 32px;
+                min-height: 32px;
+            }
+            .share-button i {
+                font-size: 14px;
+            }
+
+            .pfp {
+                width: 35px;
+                height: 35px;
+            }
+
+            .action-buttons {
+                gap: 5px;
+            }
+        }
+
+        @media screen and (max-width: 320px) {
+            .post-form {
+                padding: 8px;
+            }
+
+            .flex-grow textarea {
+                font-size: 11px;
+            }
+
+            .icon-button {
+                padding: 4px;
+                font-size: 16px;
+            }
+
+            #file-icon {
+                font-size: 25px;
+            }
+
+            .share-button {
+                min-width: 28px;
+                min-height: 28px;
+            }
+            .share-button i {
+                font-size: 12px;
+            }
+
+            .pfp {
+                width: 30px;
+                height: 30px;
+            }
+        }
+
+        .menu {
+            position: relative;
+            float: right;
+            cursor: pointer;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .cross button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6c757d;
+            font-size: 20px;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .cross button:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            min-width: 150px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 8px 15px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .dropdown-menu a:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-menu i {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .post-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            width: 95%;
+            margin: 20px auto;
+            transition: all 0.3s ease;
+        }
+
+        /* Responsive breakpoints for post container */
+        @media screen and (max-width: 1600px) {
+            .post-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media screen and (max-width: 1200px) {
+            .post-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .post-container {
+                grid-template-columns: 1fr;
+                width: 85%;
+                gap: 12px;
+            }
+        }
+
+        @media screen and (max-width: 576px) {
+            .post-container {
+                width: 95%;
+                gap: 10px;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 10px;
+            width: 100%;
+        }
+
+        .content {
+            position: relative;
+            padding: 8px;
+        }
+
+        .content .image-pfp {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .post-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        @media screen and (max-width: 393px) {
+            .post-container {
+                width: 100%;
+                gap: 8px;
+                margin: 5px 0;
+            }
+
+            .card {
+                border-radius: 0;
+                padding: 8px;
+            }
+
+            .content {
+                padding: 5px;
+            }
+
+            .post-content img {
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+
+            .post-actions {
+                padding: 4px 0;
+                font-size: 12px;
+                gap: 10px;
+            }
+
+            .action-buttons .icon-button {
+                padding: 6px 10px;
+            }
+
+            .post-header {
+                gap: 2px;
+            }
+
+            .post-time {
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+        }
+
+        .post-time {
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .post-content h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .post-content p {
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .post-content img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 20px;
+            padding: 5px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 4px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .action-buttons .icon-button {
+            padding: 8px 20px;
+            border-radius: 20px;
+        }
+
+        .action-buttons .icon-button:hover {
+            background-color: #f8f9fa;
+            color: #007bff;
+        }
+
+        @media screen and (max-width: 768px) {
+            .post-container {
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .card {
+                border-radius: 0;
+            }
+        }
+
+        .name {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .name h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .follow {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .follow:hover {
+            background-color: #0056b3;
+        }
+
+        @media screen and (max-width: 576px) {
+            .name h2 {
+                font-size: 14px;
+            }
+            .follow {
+                padding: 3px 10px;
+                font-size: 12px;
+            }
+        }
+
+        .content-tabs {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-content {
+            margin-top: 20px;
+        }
+
+        .post-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 0 15px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .post-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .content-tabs {
+                margin: 10px 0;
+                padding: 10px;
+            }
+        }
+
+        .post-image-container {
+            width: 100%;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f8f9fa;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .post-image {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            object-fit: contain;
+            display: block;
+        }
+
+        @media screen and (max-width: 768px) {
+            .post-image-container {
+                min-height: 150px;
+            }
+        }
+
+        .icon-button i.fas.fa-heart {
+            color: #dc3545;
+            transform: scale(1.1);
+        }
+        
+        .icon-button i.far.fa-heart {
+            color: #6c757d;
+        }
+        .icon-button i.far.fa-heart {
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+        
+        .icon-button i.fas.fa-heart.text-danger {
+            color: #ff3366 !important;
+            transform: scale(1.1);
+        }
+        .comment-form {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            background: white;
+        }
+
+        .comment-form input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .comment-form input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .comment-form button {
+            padding: 8px 24px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .comment-form button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .comments-list {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .comment-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .comment-user {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .comment-time {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .comment-content {
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        .no-comments {
+            text-align: center;
+            color: #6c757d;
+            padding: 30px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            animation: scaleIn 0.3s ease;
+        }
+
+        .comments-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .comment-item {
+            padding: 15px;
+            border-bottom: 1px solid var (--border-color);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .comment-form {
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .comment-form input {
+            flex: 1;
+            padding: 10px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .comment-form button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    {% include "include/navbar.html" %}
+    <div class="profile-container">
+        <div class="profile-header glass-effect">
+            <div class="profile-image" onclick="{% if user.id == profile_user.id %}showStoryUpload(){% endif %}">
+                <img src="{{ user.profile_picture.url | default:'/static/default/user.png' }}" alt="Profile Picture">
+                {% if user.id == profile_user.id %}
+                    <div class="story-upload-hint">Click to add story</div>
+                {% endif %}
+            </div>
+            
+            <div class="profile-info">
+                <div class="profile-title">
+                    <h1>{{ profile_user.username }}</h1>
+                    <div class="profile-actions">
+                        {% if user.id == profile_user.id %}
+                            <a href="{% url 'edit_profile' %}" class="btn edit-btn">Edit Profile</a>
+                        {% else %}
+                            <button class="btn {% if is_following %}unfollow-btn{% else %}follow-btn{% endif %}"
+                                    onclick="toggleFollow({{ profile_user.id }})">
+                                {% if is_following %}Unfollow{% else %}Follow{% endif %}
+                            </button>
+                            <a href="" class="btn message-btn">Message</a>
+                        {% endif %}
+                        <button class="btn share-btn" onclick="shareProfile()">Share</button>
+                    </div>
+                </div>
+
+                <div class="profile-stats glass-effect">
+                    <span class="stat-item">
+                        <strong>{{ stats.posts|default:"0" }}</strong>
+                        <span>posts</span>
+                    </span>
+                    <span class="stat-item" onclick="showFollowers()">
+                        <strong>{{ stats.followers|default:"0" }}</strong>
+                        <span>followers</span>
+                    </span>
+                    <span class="stat-item" onclick="showFollowing()">
+                        <strong>{{ stats.following|default:"0" }}</strong>
+                        <span>following</span>
+                    </span>
+                    <span class="stat-item" onclick="showLikedPosts()">
+                        <strong>{{ stats.likes_given|default:"0" }}</strong>
+                        <span>likes given</span>
+                    </span>
+                </div>
+
+                <div class="profile-bio">
+                    <h2>{{ profile_user.name }}</h2>
+                    <p>{{ profile_user.bio|default:""|linebreaksbr }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-tabs">
+            <button class="tab active" data-tab="posts">Posts</button>
+            <button class="tab" data-tab="photos">Photos</button>
+            <button class="tab" data-tab="videos">Videos</button>
+        </div>
+        <div class="tab-content">
+            <div class="post-container" id="posts-tab">
+                {% for post in posts %}
+                <div class="card">
+                    <div class="content">
+                        <div class="menu">
+                            <i class="fas fa-ellipsis-vertical" onclick="toggleMenu(this)"></i>
+                            <div class="dropdown-menu">
+                                {% if post.user == request.user %}
+                                <a href="#" onclick="editPost({{ post.id }})"><i class="fas fa-edit"></i> Edit Post</a>
+                                <a href="#" onclick="deletePost({{ post.id }})"><i class="fas fa-trash"></i> Delete Post</a>
+                                {% else %}
+                                <a href="#" onclick="reportPost({{ post.id }})"><i class="fas fa-flag"></i> Report Post</a>
+                                {% endif %}
+                                <a href="#" onclick="savePost({{ post.id }})"><i class="fas fa-save"></i> Save Post</a>
+                            </div>
+                        </div>
+                        <div class="image-pfp">
+                            <img src="{% if post.user.profile_picture and post.user.profile_picture.url %}{{ post.user.profile_picture.url }}{% else %}{% static 'default/user.png' %}{% endif %}" 
+                                 class="pfp" alt="{{ post.user.username }}">
+                            <div class="post-header">
+                                <div class="name">
+                                    <h2>{{ post.user.username }}</h2>
+                                    {% if not post.user == request.user %}
+                                        <button class="follow" onclick="toggleFollow({{ post.user.id }})">
+                                            {% if post.user.id in following %}Unfollow{% else %}Follow{% endif %}
+                                        </button>
+                                    {% endif %}
+                                </div>
+                                <div class="post-time">{{ post.created_at|timesince }} ago</div>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            {% if post.title %}<h3>{{ post.title }}</h3>{% endif %}
+                            <p>{{ post.content }}</p>
+                            {% if post.image %}
+                                <div class="post-image-container">
+                                    <img src="{{ post.image }}" alt="Post Image" 
+                                         class="post-image"
+                                         onerror="this.parentElement.style.display='none'"
+                                         loading="lazy">
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="post-actions">
+                            <div class="likes">{{ post.total_likes }} Likes</div>
+                            <div class="comments">{{ post.total_comments }} Comments</div>
+                            <div class="retweets">{{ post.total_retweets }} Retweets</div>
+                            <div class="shares">{{ post.total_shares }} Shares</div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="icon-button" onclick="likePost({{ post.id }}, this)">
+                                <i class="far fa-heart {% if post.is_liked %}fas text-danger{% endif %}"></i>
+                            </button>
+                            <button class="icon-button" onclick="toggleComments({{ post.id }})">
+                                <i class="fas fa-comment"></i>
+                            </button>
+                            <button class="icon-button" onclick="retweetPost({{ post.id }})">
+                                <i class="fas fa-retweet"></i>
+                            </button>
+                            <button class="icon-button" onclick="toggleShareMenu({{ post.id }})">
+                                <i class="fas fa-share"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>            
+                {% endfor %}      
+            </div>
+            <div class="post-container" id="photos-tab" style="display: none;">
+                <!-- Photos content will be loaded here -->
+            </div>
+            <div class="post-container" id="videos-tab" style="display: none;">
+                <!-- Videos content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div> <!-- profile-container end -->
+<script>
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    function toggleFollow(userId) {
+        const btn = event.target;
+        const followersCountElement = document.querySelector('.stat-item strong');
+        btn.disabled = true;
+        fetch(`/netspace/toggle_follow/${userId}/`, {  // Updated URL pattern
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ user_id: userId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const isFollowing = data.following;
+                btn.textContent = isFollowing ? 'Unfollow' : 'Follow';
+                btn.className = `btn ${isFollowing ? 'unfollow-btn' : 'follow-btn'}`;
+                if (followersCountElement) {
+                    followersCountElement.textContent = data.followers_count;
+                }
+                btn.classList.add('button-pop');
+                setTimeout(() => btn.classList.remove('button-pop'), 200);
+                if (isFollowing) {
+                    btn.classList.remove('follow-btn');
+                    btn.classList.add('unfollow-btn');
+                } else {
+                    btn.classList.remove('unfollow-btn');
+                    btn.classList.add('follow-btn');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            btn.disabled = false;
+        });
+    }
+
+    function submitComment(event, postId) {
+        event.preventDefault();
+        const form = event.target;
+        const input = form.querySelector('input');
+        const content = input.value.trim();
+
+        if (!content) return;
+
+        fetch('/netspace/add_comment/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                post_id: postId,
+                content: content
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const commentsList = form.closest('.modal-content').querySelector('.comments-list');
+                const noComments = commentsList.querySelector('.no-comments');
+                if (noComments) noComments.remove();
+                
+                // Add the new comment to the list
+                const newComment = document.createElement('div');
+                newComment.className = 'comment-item';
+                newComment.innerHTML = `
+                    <div class="comment-header">
+                        <strong>${data.username}</strong>
+                        <small>Just now</small>
+                    </div>
+                    <div class="comment-content">${content}</div>
+                `;
+                
+                commentsList.insertBefore(newComment, commentsList.firstChild);
+                input.value = '';
+
+                // Update comment count in the post
+                const postElement = document.querySelector('.post-actions .comments');
+                if (postElement) {
+                    const currentCount = parseInt(postElement.textContent) || 0;
+                    postElement.textContent = `${currentCount + 1} Comments`;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to post comment. Please try again.');
+        });
+    }
+
+    function closeCommentsModal() {
+        document.getElementById('commentsModal').style.display = 'none';
+        currentPostId = null;
+    }
+    window.onclick = function(event) {
+        const modal = document.getElementById('commentsModal');
+        if (event.target == modal) {
+            closeCommentsModal();
+        }
+    }
+    function formatTimeAgo(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return date.toLocaleDateString();
+    }
+    function shareProfile() {
+        const currentUrl = window.location.href;
+        if (navigator.share) {
+            navigator.share({
+                title: `${document.title}`,
+                url: currentUrl
+            })
+            .catch(error => console.log('Error sharing:', error));
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            navigator.clipboard.writeText(currentUrl)
+                .then(() => alert('Profile link copied to clipboard!'))
+                .catch(err => console.error('Failed to copy:', err));
+        }
+    }
+// Add this JavaScript to handle tab switching
+function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.post-container').forEach(container => {
+        container.style.display = 'none';
+    });
+    // Show selected tab content
+    document.getElementById(`${tabName}-tab`).style.display = 'grid';
+    // Update tab active states
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+}
+// Add click listeners to tabs
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        switchTab(tab.dataset.tab);
+    });
+});
+function likePost(postId, button) {
+    fetch('/netspace/like_post/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ post_id: postId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const icon = button.querySelector('i');
+        const likesCount = button.closest('.content').querySelector('.likes');
+        
+        if (data.status === 'liked') {
+            icon.classList.remove('far');
+            icon.classList.add('fas', 'text-danger');
+            likesCount.textContent = `${data.likes} Likes`;
+            // Add animation
+            button.classList.add('button-pop');
+            setTimeout(() => button.classList.remove('button-pop'), 200);
+        } else {
+            icon.classList.remove('fas', 'text-danger');
+            icon.classList.add('far');
+            likesCount.textContent = `${data.likes} Likes`;
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+function toggleComments(postId) {
+    fetch(`/netspace/get_comments/${postId}/`)
+    .then(response => response.json())
+    .then(data => {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.setAttribute('data-post-id', postId);  // Add post ID to modal
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Comments</h3>
+                    <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                </div>
+                <div class="comments-list">
+                    ${data.comments && data.comments.length > 0 ? 
+                        data.comments.map(comment => `
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <strong>${comment.username}</strong>
+                                    <small>${formatTimeAgo(comment.created_at)}</small>
+                                </div>
+                                <div class="comment-content">${comment.content}</div>
+                            </div>
+                        `).join('') 
+                        : '<p class="no-comments">No comments yet. Be the first to comment!</p>'
+                    }
+                </div>
+                <form class="comment-form" onsubmit="event.preventDefault(); handleComment(this, ${postId});">
+                    <input type="text" name="comment" placeholder="Write a comment..." required>
+                    <button type="submit">Post</button>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to load comments');
+    });
+}
+
+function handleComment(form, postId) {
+    const input = form.querySelector('input[name="comment"]');
+    const content = input.value.trim();
+    
+    if (!content) return;
+    
+    const commentData = {
+        post_id: postId,
+        content: content
+    };
+
+    fetch('/netspace/add_comment/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(commentData)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update comments list
+            const commentsList = form.closest('.modal-content').querySelector('.comments-list');
+            const noComments = commentsList.querySelector('.no-comments');
+            if (noComments) noComments.remove();
+
+            // Add new comment to list
+            const newComment = `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <strong>${data.username}</strong>
+                        <small>Just now</small>
+                    </div>
+                    <div class="comment-content">${content}</div>
+                </div>
+            `;
+            commentsList.insertAdjacentHTML('afterbegin', newComment);
+            
+            // Clear input
+            input.value = '';
+            
+            // Update comment count on post
+            const post = document.querySelector(`[data-post-id="${postId}"]`);
+            const commentsCount = post ? post.querySelector('.comments') : document.querySelector('.comments');
+            if (commentsCount) {
+                const count = parseInt(commentsCount.textContent.split(' ')[0]) || 0;
+                commentsCount.textContent = `${count + 1} Comments`;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to post comment. Please try again.');
+    });
+}
+function retweetPost(postId) {
+    fetch(`/netspace/repost_post/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ post_id: postId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const button = event.target.closest('.icon-button');
+        const icon = button.querySelector('i');
+        if (data.status === 'reposted') {
+            icon.style.color = '#28a745';
+        } else {
+            icon.style.color = '#6c757d';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+function toggleShareMenu(postId) {
+    if (navigator.share) {
+        // For mobile devices
+        navigator.share({
+            title: 'Share this post',
+            url: `${window.location.origin}/post/${postId}`
+        }).catch(err => console.log('Error sharing:', err));
+    } else {
+        // For desktop - create a custom share menu
+        const shareUrl = `${window.location.origin}/post/${postId}`;
+        navigator.clipboard.writeText(shareUrl)
+            .then(() => alert('Post link copied to clipboard!'))
+            .catch(err => console.error('Failed to copy:', err));
+    }
+}
+</script>
+</body>
+</html>

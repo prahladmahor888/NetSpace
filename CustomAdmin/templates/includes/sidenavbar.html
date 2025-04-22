@@ -1,0 +1,40 @@
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dashboard_2" />
+<ul id="slide-out" class="sidenav">
+<li>
+    <div class="user-view">
+        <div class="background">
+            <img src="https://images.pexels.com/photos/1386603/pexels-photo-1386603.jpeg?auto=compress&cs=tinysrgb&w=600">
+        </div>
+            <a href="#user"><img class="circle" src="https://images.pexels.com/photos/2010877/pexels-photo-2010877.jpeg?auto=compress&cs=tinysrgb&w=600"></a>
+            <a href="#name"><span class="white-text name">John Doe</span></a>
+            <a href="#email"><span class="white-text email">jdandturk@gmail.com</span></a>
+    </div>
+</li>
+<li><div class="divider"></div></li>
+<li><a class="dashboard"> <span class="material-symbols-outlined">
+    dashboard_2
+    </span> Dashboard</a></li>
+<li><a class='dropdown-trigger' href='#' data-target='dropdown1'><i class="fas fa-users me-2"></i> User Management</a>
+
+    <!-- Dropdown Structure -->
+    <ul id='dropdown1' class='dropdown-content'>
+      <li><a href="{% url 'admin_users' %}"><i class="fas fa-user-friends me-2"></i>All Users</a></li>
+      <li><a href="#!"><i class="fas fa-layer-group me-2"></i>Groups</a></li>
+    </ul></li>
+<li><a class="waves-effect" href="#!"><i class="fas fa-cog me-2"></i> Profile Settings</a></li>
+<li><a class="waves-effect" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+</ul>
+<a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.sidenav');
+        var dropdown = document.querySelectorAll('.dropdown-trigger');
+        M.Sidenav.init(elems);
+        M.Dropdown.init(dropdown);
+    });    
+</script>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-light: #f8fafc;
+            --card-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        
+        body {
+            background: var(--bg-light);
+            color: #1f2937;
+        }
+        
+        .profile-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .profile-picture-container {
+            position: relative;
+            display: inline-block;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            overflow: hidden;
+            background: var(--primary);
+            box-shadow: var(--card-shadow);
+        }
+
+        .profile-picture {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+
+        .profile-picture-container::after {
+            content: '\f030';
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 2;
+        }
+
+        .profile-picture-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+
+        .profile-picture-container:hover::after,
+        .profile-picture-container:hover::before {
+            opacity: 1;
+        }
+
+        .profile-picture-container:hover .profile-picture {
+            transform: scale(1.1);
+        }
+
+        #profile_picture {
+            display: none;
+        }
+
+        .section-card {
+            border: none;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+
+        .section-card:hover {
+            box-shadow: var(--card-shadow);
+        }
+
+        .section-header {
+            background: var(--bg-light);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .section-header h5 {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Add icons to section headers */
+        .card-header h5:before {
+            font-family: "Font Awesome 6 Free";
+            margin-right: 8px;
+            font-weight: 900;
+        }
+
+        .card-header h5.basic-info:before {
+            content: "\f007";
+        }
+
+        .card-header h5.contact-info:before {
+            content: "\f0e0";
+        }
+
+        .card-header h5.additional-info:before {
+            content: "\f129";
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            
+            .col-md-6 {
+                width: 100%;
+            }
+            
+            .form-control, .form-select {
+                font-size: 16px; /* Prevents zoom on mobile */
+                padding: 0.625rem;
+            }
+
+            .section-card {
+                margin-bottom: 1rem;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            select.form-select {
+                width: 100%;
+                max-width: 100%;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container bg-white">
+        <h2 class="text-center mb-4" style="color: var(--primary); font-weight: 600;">
+            <i class="fas fa-user-edit me-2"></i>Edit Profile
+        </h2>
+        
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="text-center mb-4">
+                <div class="profile-picture-container" onclick="document.getElementById('profile_picture').click()">
+                    <img src="{{ user.profile_picture.url|default:'https://via.placeholder.com/150' }}" 
+                         class="profile-picture" id="profile-preview" alt="Profile Picture">
+                    <input type="file" id="profile_picture" name="profile_picture" 
+                           accept="image/*" onchange="previewImage(this)" hidden>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-header section-header">
+                    <h5 class="mb-0 basic-info">Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ user.username }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nickname" class="form-label">Nickname</label>
+                            <input type="text" class="form-control" id="nickname" name="nickname" 
+                                   value="{{ user.nickname }}" placeholder="Enter your nickname">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ user.first_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ user.last_name }}">
+                        </div>
+                        <div class="col-12">
+                            <label for="bio" class="form-label">Bio</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="3">{{ user.user_bio }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="date_of_birth" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
+                                   value="{% if user.date_of_birth %}{{ user.date_of_birth|date:'Y-m-d' }}{% endif %}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="gender" class="form-label">Gender</label>
+                            <!-- Debug output -->
+                            <!-- {{ user.gender }} -->
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="">Choose...</option>
+                                <option value="Male" {% if user.gender|lower == 'male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if user.gender|lower == 'female' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if user.gender|lower == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-header section-header">
+                    <h5 class="mb-0 contact-info">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user.email }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ user.phone_number|default:'' }}" 
+                                   placeholder="Enter your phone number">
+                        </div>
+                        <div class="col-12">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" name="city" 
+                                   value="{{ user.user_place }}" placeholder="Enter your city">
+                        </div>
+                        <div class="col-12">
+                            <label for="website" class="form-label">Website</label>
+                            <input type="url" class="form-control" id="website" name="website" 
+                                   value="{{ user.user_website }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-header section-header">
+                    <h5 class="mb-0 additional-info">Additional Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="interests" class="form-label">Interests/Hobbies</label>
+                            <textarea class="form-control" id="interests" name="interests" 
+                                      rows="2">{{ user.user_interests }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="occupation" class="form-label">Occupation</label>
+                            <input type="text" class="form-control" id="occupation" name="occupation" 
+                                   value="{{ user.user_occupation }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="education" class="form-label">Education</label>
+                            <input type="text" class="form-control" id="education" name="education" 
+                                   value="{{ user.user_education }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profile-preview').setAttribute('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+</body>
+</html>

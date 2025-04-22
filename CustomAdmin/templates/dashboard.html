@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --success-gradient: linear-gradient(135deg, #059669 0%, #34d399 100%);
+            --warning-gradient: linear-gradient(135deg, #d97706 0%, #fbbf24 100%);
+            --info-gradient: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
+        }
+        .dashboard-container {
+            padding: 25px;
+            margin-left: 250px;
+            background-color: #f8fafc;
+            min-height: 100vh;
+        }
+        .stats-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .stats-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .stats-card:hover::after {
+            opacity: 1;
+        }
+        .stats-card.bg-primary { background: var(--primary-gradient) !important; }
+        .stats-card.bg-success { background: var(--success-gradient) !important; }
+        .stats-card.bg-warning { background: var(--warning-gradient) !important; }
+        .stats-card.bg-info { background: var(--info-gradient) !important; }
+        
+        .stats-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .stats-trend {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .chart-container {
+            height: 350px;
+            margin-top: 20px;
+        }
+        .card {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        h2.mb-4 {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 2rem;
+        }
+        .card-title {
+            font-weight: 600;
+            color: #475569;
+        }
+        .stats-card .card-title {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stats-card h3 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .list-group-item {
+            transform: translateX(0);
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            border: none;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+        .list-group-item:hover {
+            transform: translateX(10px);
+            border-left: 4px solid #8b5cf6;
+            background: #f1f5f9;
+        }
+        .list-group-item h6 {
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .list-group-item small {
+            color: #64748b;
+        }
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            margin-right: 1rem;
+        }
+        @media (max-width: 768px) {
+            .dashboard-container {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .row > div {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        .user-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .user-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .user-list::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .user-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    {% include "includes/sidenavbar.html" %}
+
+    <div class="dashboard-container">
+        <h2 class="mb-4">Dashboard Overview</h2>
+        
+        <div class="row g-4">
+            <!-- Stats Cards -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card bg-primary text-white">
+                    <div class="card-body">
+                        <i class="fas fa-users stats-icon"></i>
+                        <h5 class="card-title">Total Users</h5>
+                        <h3 class="mb-2">{{ total_users }}</h3>
+                        <div class="stats-trend">
+                            <i class="fas fa-arrow-{% if percentage_increase >= 0 %}up{% else %}down{% endif %}"></i>
+                            <span>{{ percentage_increase }}% {% if percentage_increase >= 0 %}increase{% else %}decrease{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card bg-success text-white">
+                    <div class="card-body">
+                        <i class="fas fa-file-alt stats-icon"></i>
+                        <h5 class="card-title">Active Posts</h5>
+                        <h3 class="mb-2">845</h3>
+                        <div class="stats-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>5% increase</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card bg-warning text-white">
+                    <div class="card-body">
+                        <i class="fas fa-comments stats-icon"></i>
+                        <h5 class="card-title">Comments</h5>
+                        <h3 class="mb-2">2,456</h3>
+                        <div class="stats-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>8% increase</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card bg-info text-white">
+                    <div class="card-body">
+                        <i class="fas fa-user-plus stats-icon"></i>
+                        <h5 class="card-title">New Users</h5>
+                        <h3 class="mb-2">{{ new_users_count }}</h3>
+                        <div class="stats-trend">
+                            <i class="fas fa-arrow-{% if percentage_increase >= 0 %}up{% else %}down{% endif %}"></i>
+                            <span>{{ percentage_increase }}% {% if percentage_increase >= 0 %}increase{% else %}decrease{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="col-12 col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">User Activity</h5>
+                        <div class="chart-container">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pie Chart Section -->
+            <div class="col-12 col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">User Distribution</h5>
+                        <div class="chart-container">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Registrations Section -->
+            <div class="col-12 col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">New Registrations (Last 7 Days)</h5>
+                        <div class="user-list">
+                            <div class="list-group list-group-flush">
+                                {% for user in new_users %}
+                                <div class="list-group-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar">
+                                            {{ user.name|slice:":2"|upper }}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ user.name }}</h6>
+                                                <small>{{ user.date|timesince }} ago</small>
+                                            </div>
+                                            <p class="mb-1">{{ user.email }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-user-slash fa-2x mb-3"></i>
+                                    <p>No new registrations in the last 7 days</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="col-12 col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Recent Activity</h5>
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-user-plus text-primary"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">New user registered</h6>
+                                            <small>3 mins ago</small>
+                                        </div>
+                                        <p class="mb-1">John Doe joined the platform</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="list-group-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-file-alt text-success"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">New post created</h6>
+                                            <small>10 mins ago</small>
+                                        </div>
+                                        <p class="mb-1">A new post was published</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Line Chart
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ activity_labels|safe }},
+                datasets: [{
+                    label: 'User Activity',
+                    data: {{ activity_data|safe }},
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#8b5cf6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.parsed.y} new users`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        const createGradient = (ctx, color1, color2) => {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            return gradient;
+        };
+
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ user_distribution.labels|safe }},
+                datasets: [{
+                    data: {{ user_distribution.data|safe }},
+                    backgroundColor: [
+                        createGradient(pieCtx, '#6366f1', '#8b5cf6'),
+                        createGradient(pieCtx, '#059669', '#34d399'),
+                        createGradient(pieCtx, '#d97706', '#fbbf24'),
+                        createGradient(pieCtx, '#0891b2', '#22d3ee')
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 20,
+                    hoverBorderWidth: 0,
+                    spacing: 0
+                }]
+            },
+            options: {
+                cutout: '0%',
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            },
+                            generateLabels: (chart) => {
+                                const data = chart.data;
+                                const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                return data.labels.map((label, index) => ({
+                                    text: `${label} (${Math.round((data.datasets[0].data[index] / total) * 100)}%)`,
+                                    fillStyle: data.datasets[0].backgroundColor[index],
+                                    hidden: false,
+                                    index: index
+                                }));
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const value = context.parsed;
+                                const percentage = Math.round((value / total) * 100);
+                                return ` ${context.label}: ${value.toLocaleString()} (${percentage}%)`;
+                            }
+                        },
+                        padding: 12,
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#1e293b',
+                        bodyColor: '#475569',
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

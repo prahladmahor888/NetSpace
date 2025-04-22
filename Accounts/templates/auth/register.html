@@ -1,0 +1,548 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Social Media</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: rotate 30s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .username-status {
+            margin-top: 5px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .username-status.checking {
+            color: #666;
+        }
+
+        .username-status.available {
+            color: #2ecc71;
+        }
+
+        .username-status.unavailable,
+        .username-status.error {
+            color: #e74c3c;
+        }
+
+        input.valid {
+            border-color: #2ecc71 !important;
+        }
+
+        input.invalid {
+            border-color: #e74c3c !important;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.75rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 350px;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .form-title {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        .form-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.35rem;
+            color: #4a5568;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: color 0.3s ease;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        input::placeholder {
+            color: #a0aec0;
+            font-size: 0.85rem;
+        }
+
+        .gender-options {
+            display: flex;
+            gap: 1.25rem;
+            margin-top: 0.35rem;
+            padding: 0.25rem 0;
+        }
+
+        .gender-option {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+        }
+
+        .gender-option input[type="radio"] {
+            width: 1rem;
+            height: 1rem;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+
+        .gender-option label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 1.25rem;
+            color: #4a5568;
+            font-size: 0.85rem;
+        }
+
+        .form-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .form-footer a:hover {
+            color: #764ba2;
+        }
+
+        .input-error {
+            color: #e53e3e;
+            font-size: 0.75rem;
+            margin-top: 0.2rem;
+            display: none;
+        }
+
+        .username-availability {
+            display: block;
+            font-size: 0.75rem;
+            margin-top: 0.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .username-availability.checking {
+            color: #4a5568;
+        }
+
+        .username-availability.available {
+            color: #16A34A;
+        }
+
+        .username-availability.taken {
+            color: #DC2626;
+        }
+
+        .username-availability.error {
+            color: #e53e3e;
+        }
+
+        input:invalid + .input-error {
+            display: block;
+        }
+
+        .message {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .error-message {
+            background-color: #FEE2E2;
+            border: 1px solid #FCA5A5;
+            color: #DC2626;
+        }
+
+        .success-message {
+            background-color: #DCFCE7;
+            border: 1px solid #86EFAC;
+            color: #16A34A;
+        }
+
+        @media (max-width: 480px) {
+            .username-status {
+            margin-top: 5px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .username-status.checking {
+            color: #666;
+        }
+
+        .username-status.available {
+            color: #2ecc71;
+        }
+
+        .username-status.unavailable,
+        .username-status.error {
+            color: #e74c3c;
+        }
+
+        input.valid {
+            border-color: #2ecc71 !important;
+        }
+
+        input.invalid {
+            border-color: #e74c3c !important;
+        }
+
+        .container {
+                padding: 1.25rem;
+            }
+
+            .form-title {
+                font-size: 1.35rem;
+                margin-bottom: 1.25rem;
+            }
+
+            input, select {
+                padding: 0.5rem 0.7rem;
+            }
+
+            .gender-options {
+                gap: 1rem;
+            }
+        }
+
+        .suggestions-container {
+            margin-top: 5px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .suggestion {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .suggestion:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container">
+        <h1 class="form-title">Create Account</h1>
+        <form method="POST" action="{% url 'register' %}" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="Choose a unique username"
+                     >
+                <span class="input-error">Username must be 3-20 characters long</span>
+                <div id="username-suggestions" class="suggestions-container" style="display: none;">
+                    <p>This username is taken. Try these instead:</p>
+                    <div id="suggestions-list"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                {% if error %}
+                <div class="message error-message">
+                    <p>{{ error }}</p>
+                </div>
+                {% endif %}
+                {% if success %}
+                <div class="message success-message">
+                    <p>{{ success }}</p>
+                </div>
+                {% endif %}
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="Enter your email address">
+                <span class="input-error">Please enter a valid email address</span>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required 
+                       placeholder="Enter your phone number"
+                       pattern="[0-9]{10}"
+                       title="Please enter a valid 10-digit phone number">
+                <span class="input-error">Please enter a valid phone number</span>
+            </div>
+            <div class="form-group">
+                <label>Gender</label>
+                <div class="gender-options">
+                    <div class="gender-option">
+                        <input type="radio" id="male" name="gender" value="male" required>
+                        <label for="male">Male</label>
+                    </div>
+                    <div class="gender-option">
+                        <input type="radio" id="female" name="gender" value="female">
+                        <label for="female">Female</label>
+                    </div>
+                    <div class="gender-option">
+                        <input type="radio" id="other" name="gender" value="other">
+                        <label for="other">Other</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Create a strong password"
+                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                       title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 characters">
+                <span class="input-error">Password must be at least 8 characters with numbers and letters</span>
+            </div>
+            <button type="submit">Create Account</button>
+            <div class="form-footer">
+                Already have an account? <a href="{% url 'login' %}">Login here</a>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const usernameInput = document.getElementById('username');
+            const usernameStatus = document.createElement('div');
+            usernameStatus.className = 'username-status';
+            usernameInput.parentNode.appendChild(usernameStatus);
+        
+            let debounceTimer;
+        
+            function validateUsername(username) {
+                // Pattern validation rule for username not starting with numbers
+                const pattern = /^[A-Za-z][A-Za-z0-9_]{2,19}$/;
+                
+                if (!pattern.test(username)) {
+                    return { valid: false, message: 'Username must start with a letter and be 3-20 characters long, containing only letters, numbers, and underscores' };
+                }
+                return { valid: true };
+            }
+        
+            function checkUsername(username) {
+                // First perform client-side validation
+                const validation = validateUsername(username);
+                if (!validation.valid) {
+                    usernameStatus.textContent = validation.message;
+                    usernameStatus.className = 'username-status error';
+                    usernameInput.classList.remove('valid');
+                    usernameInput.classList.add('invalid');
+                    return;
+                }
+        
+                // If client-side validation passes, check with server
+                fetch('{% url "check_username" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ username: username })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.available) {
+                        usernameStatus.textContent = '✓ Username is available';
+                        usernameStatus.className = 'username-status available';
+                        usernameInput.classList.remove('invalid');
+                        usernameInput.classList.add('valid');
+                    } else {
+                        usernameStatus.textContent = '✗ Username is already taken';
+                        usernameStatus.className = 'username-status unavailable';
+                        usernameInput.classList.remove('valid');
+                        usernameInput.classList.add('invalid');
+                    }
+                })
+                .catch(error => {
+                    usernameStatus.textContent = 'Error checking username availability';
+                    usernameStatus.className = 'username-status error';
+                    usernameInput.classList.remove('valid', 'invalid');
+                });
+            }
+        
+            usernameInput.addEventListener('input', function(e) {
+                const username = e.target.value.trim();
+                
+                // Clear previous status
+                usernameStatus.textContent = 'Checking...';
+                usernameStatus.className = 'username-status checking';
+                usernameInput.classList.remove('valid', 'invalid');
+                
+                // Clear previous timer
+                clearTimeout(debounceTimer);
+                
+                if (!username) {
+                    usernameStatus.textContent = 'Username is required';
+                    usernameStatus.className = 'username-status error';
+                    usernameInput.classList.add('invalid');
+                    return;
+                }
+                
+                // Set new timer with reduced delay for better responsiveness
+                debounceTimer = setTimeout(() => {
+                    checkUsername(username);
+                }, 300); // Reduced from 500ms to 300ms for better responsiveness
+            });
+        });
+
+        document.getElementById('username').addEventListener('input', async function() {
+            const username = this.value.trim();
+            const suggestionsDiv = document.getElementById('username-suggestions');
+            const suggestionsList = document.getElementById('suggestions-list');
+
+            if (username.length < 3) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch('{% url "check_username" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ username })
+                });
+                const data = await response.json();
+
+                if (!data.available && data.suggestions) {
+                    suggestionsList.innerHTML = data.suggestions.map(suggestion => 
+                        `<div class="suggestion" onclick="selectUsername('${suggestion}')">${suggestion}</div>`
+                    ).join('');
+                    suggestionsDiv.style.display = 'block';
+                } else {
+                    suggestionsDiv.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking username:', error);
+            }
+        });
+
+        function selectUsername(username) {
+            document.getElementById('username').value = username;
+            document.getElementById('username-suggestions').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

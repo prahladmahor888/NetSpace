@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fafbfc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e293b;
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 1.5rem;
+            max-width: 400px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .error-code {
+            font-size: 96px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0ea5e9, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .error-message {
+            font-size: 18px;
+            color: #64748b;
+            margin: 12px 0;
+            font-weight: 500;
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        .home-button {
+            display: inline-block;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #0ea5e9, #6366f1);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .home-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .error-illustration {
+            width: 120px;
+            height: 120px;
+            margin: 8px auto;
+            opacity: 0.9;
+            animation: rotate 8s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 72px;
+            }
+            .error-message {
+                font-size: 16px;
+                margin: 10px 0;
+            }
+            .error-illustration {
+                width: 100px;
+                height: 100px;
+            }
+            .home-button {
+                padding: 8px 20px;
+                font-size: 13px;
+            }
+        }
+
+        .brand-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0ea5e9;
+            margin-bottom: 8px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .error-details {
+            font-size: 14px;
+            color: #94a3b8;
+            margin: 8px 0 16px;
+            line-height: 1.5;
+        }
+
+        .action-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .secondary-button {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #f1f5f9;
+            color: #0ea5e9;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .secondary-button:hover {
+            background: #e2e8f0;
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                transform: skewX(0deg);
+            }
+            50% {
+                transform: skewX(-3deg);
+            }
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+        }
+
+        /* Disable animations on reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            .error-container, .brand-name, .error-message, 
+            .home-button, .secondary-button, .error-illustration {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="brand-name">AI Web Platform</div>
+        <svg class="error-illustration" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="url(#gradient)" stroke-width="1.5"/>
+            <path d="M9 9L15 15M15 9L9 15" stroke="url(#gradient)" stroke-width="1.5" stroke-linecap="round"/>
+            <defs>
+                <linearGradient id="gradient" x1="3" y1="3" x2="21" y2="21">
+                    <stop offset="0%" stop-color="#0ea5e9"/>
+                    <stop offset="100%" stop-color="#6366f1"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <h1 class="error-code">404</h1>
+        <p class="error-message">Page Not Found</p>
+        <p class="error-details">The page you're looking for doesn't exist or has been moved. Our AI-powered platform helps you create and manage web applications efficiently.</p>
+        <div class="action-container">
+            <a href="/" class="home-button">Return Home</a>
+            <a href="/contact" class="secondary-button">Contact Support</a>
+        </div>
+    </div>
+</body>
+</html>

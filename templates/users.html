@@ -1,0 +1,224 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - Social Media</title>
+    <link rel="stylesheet" href="{% static 'css/users.css' %}">
+</head>
+<body>
+    {% include "include/navbar.html" %}
+    
+    <div class="users-container">
+        <!-- Add notification toast container -->
+        <div id="notificationToast" class="notification-toast" style="display: none;">
+            <span id="notificationMessage"></span>
+        </div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search users..." onkeyup="searchUsers()">
+            <i class="fas fa-search"></i>
+        </div>
+
+        {% if suggested_users %}
+        <div class="suggested-users">
+            <h2>Suggested Users</h2>
+            <div class="users-list">
+                {% for user in suggested_users %}
+                <div class="user-card" data-username="{{ user.username|lower }}" data-bio="{{ user.user_bio|lower|default:'' }}" onclick="navigateToProfile(event, '{{ user.username }}')" style="cursor: pointer;">
+                    <div class="user-image">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+                        {% else %}
+                            <img src="{% static 'default/user.png' %}" alt="Default profile">
+                        {% endif %}
+                    </div>
+                    <div class="user-details">
+                        <h3>{{ user.username }}</h3>
+                        <p class="user-bio">{{ user.user_bio|truncatechars:40|default:"No bio available" }}</p>
+                    </div>
+                    <div class="user-actions">
+                        <button class="follow-btn" onclick="followUser({{ user.id }}, 'follow', this)">Follow</button>
+                        <button class="message-btn">
+                            <i class="far fa-envelope"></i> Message
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="all-users">
+            <h2>All Users</h2>
+            <div class="users-list" id="usersList">
+                {% for user_data in users %}
+                <div class="user-card" data-username="{{ user_data.user.username|lower }}" data-bio="{{ user_data.user.user_bio|lower|default:'' }}" onclick="navigateToProfile(event, '{{ user_data.user.username }}')" style="cursor: pointer;">
+                    <div class="user-image">
+                        {% if user_data.user.profile_picture %}
+                            <img src="{{ user_data.user.profile_picture.url }}" alt="{{ user_data.user.username }}">
+                        {% else %}
+                            <img src="{% static 'default/user.png' %}" alt="Default profile">
+                        {% endif %}
+                    </div>
+                    <div class="user-details">
+                        <h3>{{ user_data.user.username }}</h3>
+                        <p class="user-bio">{{ user_data.user.user_bio|truncatechars:40|default:"No bio available" }}</p>
+                    </div>
+                    <div class="user-actions">
+                        {% if user_data.is_following %}
+                            <button class="follow-btn following" onclick="followUser({{ user_data.user.id }}, 'unfollow', this)">Unfollow</button>
+                        {% else %}
+                            {% if user_data.is_following_you %}
+                                <button class="follow-btn" onclick="followUser({{ user_data.user.id }}, 'follow', this)">Follow Back</button>
+                            {% else %}
+                                <button class="follow-btn" onclick="followUser({{ user_data.user.id }}, 'follow', this)">Follow</button>
+                            {% endif %}
+                        {% endif %}
+                        <button class="message-btn">
+                            <i class="far fa-envelope"></i> Message
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        .follow-back-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function followUser(userId, action, button) {
+            const csrftoken = getCookie('csrftoken');
+            try {
+                const response = await fetch('{% url "users" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: `user_id=${userId}&action=${action}`
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    if (action === 'follow') {
+                        if (data.is_request_sent) {
+                            button.textContent = 'Requested';
+                            button.disabled = true;
+                            showNotification('Follow request sent');
+                        } else {
+                            button.textContent = 'Unfollow';
+                            button.classList.add('following');
+                            button.onclick = () => followUser(userId, 'unfollow', button);
+                            showNotification('Started following user');
+                            
+                            // Add follow back button if user is following you
+                            if (data.is_following_you) {
+                                const followBackBtn = document.createElement('button');
+                                followBackBtn.className = 'follow-back-btn';
+                                followBackBtn.textContent = 'Follow Back';
+                                followBackBtn.onclick = () => followUser(userId, 'follow', followBackBtn);
+                                button.parentElement.appendChild(followBackBtn);
+                            }
+                        }
+                    } else {
+                        button.textContent = 'Follow';
+                        button.classList.remove('following');
+                        button.disabled = false;
+                        button.onclick = () => followUser(userId, 'follow', button);
+                        showNotification('Unfollowed user');
+                        
+                        // Remove follow back button if exists
+                        const followBackBtn = button.parentElement.querySelector('.follow-back-btn');
+                        if (followBackBtn) {
+                            followBackBtn.remove();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error processing follow action');
+            }
+        }
+
+        function showNotification(message) {
+            const toast = document.getElementById('notificationToast');
+            const messageEl = document.getElementById('notificationMessage');
+            messageEl.textContent = message;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function searchUsers() {
+            const searchInput = document.getElementById('searchInput');
+            const filter = searchInput.value.toLowerCase();
+            const userCards = document.querySelectorAll('.user-card');
+
+            userCards.forEach(card => {
+                const username = card.getAttribute('data-username');
+                const bio = card.getAttribute('data-bio');
+                const shouldShow = username.includes(filter) || bio.includes(filter);
+                
+                if (shouldShow) {
+                    card.style.display = "flex";
+                    card.style.animation = "fadeIn 0.3s ease";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+
+        function navigateToProfile(event, username) {
+            // Prevent navigation if clicking buttons
+            if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
+                return;
+            }
+            window.location.href = "{% url 'user_profile' username=12345 %}".replace('12345', username);
+        }
+    </script>
+</body>
+</html>

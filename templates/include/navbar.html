@@ -1,0 +1,341 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<nav class="navbar">
+    <div class="nav-brand">
+        <a href="{% url 'home' %}" class="brand-logo">NetSpace</a>
+    </div>
+    
+    <div class="nav-menu">
+        <a href="{% url 'home' %}" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'rooms' %}" class="nav-item">
+            <i class="fas fa-door-open"></i>
+            <span>Rooms</span>
+        </a>
+        <a href="{% url 'users' %}" class="nav-item">
+            <i class="fas fa-user-friends"></i>
+            <span>Friends</span>
+            <span class="badge">2</span>
+        </a>
+        <a href="{% url 'user_chats' %}" class="nav-item">
+            <i class="fas fa-comment-alt"></i>
+            <span>Messages</span>
+            <span class="badge pulse">3</span>
+        </a>
+        <a href="{% url 'notifications' %}" class="nav-item">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+            <span class="badge">1</span>
+        </a>
+    </div>
+    <div class="profile-menu">
+        <img src="{{ user.profile_picture.url | default:'/static/default/user.png' }}" alt="Profile" class="profile-img">
+        <div class="profile-dropdown" id="profileDropdown">
+            <a href="{% url 'user_profile' %}" class="dropdown-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="{% url 'settings' %}" class="dropdown-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            <a href="{% url 'logout' %}" class="dropdown-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <button class="mobile-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+</nav>
+
+<style>
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3rem 0.75rem;
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.nav-brand .brand-logo {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #1877f2;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #65676b;
+    padding: 0.35rem;
+    border-radius: 6px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.nav-item i {
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+}
+
+.nav-item:hover {
+    background: #f0f2f5;
+    color: #1877f2;
+    transform: translateY(-2px);
+}
+
+.nav-item.active {
+    color: #1877f2;
+}
+
+.badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e41e3f;
+    color: white;
+    border-radius: 50%;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    min-width: 18px;
+    text-align: center;
+}
+
+.badge.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(228, 30, 63, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 10px rgba(228, 30, 63, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(228, 30, 63, 0);
+    }
+}
+
+.profile-menu {
+    position: relative;
+    cursor: pointer;
+    margin-left: 1rem;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+    margin-right: 3rem;  /* Add space for mobile toggle */
+}
+
+.profile-menu:hover {
+    background-color: #f0f2f5;
+}
+
+.profile-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.profile-img:hover {
+    transform: scale(1.1);
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    min-width: 220px;
+    padding: 0.75rem 0.5rem;
+    display: none;
+    animation: slideDown 0.3s ease;
+    z-index: 1001;
+}
+
+.profile-dropdown.show {
+    display: block;
+}
+
+/* Remove the hover rule */
+/* .profile-menu:hover .profile-dropdown {
+    display: block;
+} */
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #65676b;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.dropdown-item i {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.dropdown-item:hover {
+    background: #f0f2f5;
+    color: #1877f2;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-login, .btn-register {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-login {
+    background: #e4e6eb;
+    color: #050505;
+}
+
+.btn-register {
+    background: #1877f2;
+    color: white;
+}
+
+.btn-login:hover, .btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mobile-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.mobile-toggle span {
+    width: 24px;
+    height: 2px;
+    background: #65676b;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .nav-menu {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: white;
+        flex-direction: column;
+        padding: 1rem;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .nav-menu.active {
+        transform: translateX(0);
+    }
+
+    .mobile-toggle {
+        display: flex;
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .mobile-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .mobile-toggle.active span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .mobile-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    .nav-item {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 1rem;
+    }
+
+    .nav-item i {
+        margin-bottom: 0;
+    }
+
+    .profile-menu {
+        margin-right: 4rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileToggle = document.querySelector('.mobile-toggle');
+    const navMenu = document.querySelector('.nav-menu');
+
+    mobileToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        navMenu.classList.toggle('active');
+    });
+
+    const profileMenu = document.querySelector('.profile-menu');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    profileMenu.addEventListener('click', function(e) {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!profileMenu.contains(e.target)) {
+            profileDropdown.classList.remove('show');
+        }
+    });
+});
+</script>
