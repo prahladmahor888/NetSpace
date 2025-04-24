@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator
 from django.conf import settings
+from SocialMedia.settings import DEFAULT_PROFILE_PIC
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -57,7 +58,7 @@ def home(request):
         user_data = {
             'id': post.user.id,
             'username': post.user.username,
-            'profile_picture': settings.DEFAULT_PROFILE_PIC
+            'profile_picture': DEFAULT_PROFILE_PIC
         }
         
         # Get counts for likes and comments
@@ -86,7 +87,7 @@ def home(request):
         'posts': posts,
         'following': following,
         'stories': active_stories,
-        'DEFAULT_PROFILE_PIC': settings.DEFAULT_PROFILE_PIC,
+        'DEFAULT_PROFILE_PIC': DEFAULT_PROFILE_PIC,
     }
     return render(request, 'index.html', context)
 
@@ -220,7 +221,7 @@ def user_profile(request, username=None):
         'is_following': is_following,
         'following': following_users,
         'is_own_profile': request.user == profile_user,
-        'DEFAULT_PROFILE_PIC': settings.DEFAULT_PROFILE_PIC
+        'DEFAULT_PROFILE_PIC': DEFAULT_PROFILE_PIC
     }
     
     return render(request, 'user_profile.html', context)
@@ -1277,5 +1278,144 @@ def notifications(request):
     
     return render(request, 'notification.html', context)
 
+import datetime
+
+import requests
+import os
+
+# Try to import geoip2, fallback to requests if not available
+try:
+    from geoip2.database import Reader
+    GEOIP2_AVAILABLE = True
+except ImportError:
+    GEOIP2_AVAILABLE = False
+
+# Path to the GeoLite2 database (update this path as needed)
+GEOLITE2_DB_PATH = os.path.join(os.path.dirname(__file__), 'GeoLite2-City.mmdb')
+
+def get_location_from_ip(ip):
+    # For local development, override local/private IPs for testing
+    if ip.startswith('127.') or ip.startswith('192.168.') or ip.startswith('10.') or ip == '::1':
+        ip = '8.8.8.8'  # Google's public DNS for demo
+
+    # Try geoip2 first if available and DB exists
+    if GEOIP2_AVAILABLE and os.path.exists(GEOLITE2_DB_PATH):
+        try:
+            with Reader(GEOLITE2_DB_PATH) as reader:
+                response = reader.city(ip)
+                city = response.city.name or ''
+                country = response.country.name or ''
+                location = ', '.join(filter(None, [city, country]))
+                return location if location else 'Location not found'
+        except Exception:
+            pass
+    # Fallback to ipinfo.io
+    try:
+        response = requests.get(f"https://ipinfo.io/{ip}/json", timeout=2)
+        if response.status_code == 200:
+            data = response.json()
+            city = data.get('city', '')
+            region = data.get('region', '')
+            country = data.get('country', '')
+            location = ', '.join(filter(None, [city, region, country]))
+            return location if location else 'Location not found'
+    except Exception:
+        pass
+    return 'Location not found'
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not request.user.check_password(current_password):
+            messages.error(request, 'Current password is incorrect.')
+            request.session['password_error'] = True
+        elif new_password != confirm_password:
+            messages.error(request, 'New passwords do not match.')
+            request.session['password_error'] = True
+        elif not new_password or len(new_password) < 8:
+            messages.error(request, 'New password must be at least 8 characters.')
+            request.session['password_error'] = True
+        else:
+            request.user.set_password(new_password)
+            request.user.save()
+            update_session_auth_hash(request, request.user)  # Prevent logout
+            messages.success(request, 'Your password has been updated successfully!')
+            request.session['password_error'] = False
+        return redirect('settings')
+    else:
+        return redirect('settings')
+
+@login_required
 def settings(request):
-    return render(request, 'settings.html')
+    # Get user IP address
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+
+    # Get device info from user agent
+    user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown Device')
+    device = user_agent[:50]  # Truncate for display
+
+    # Get location using ipinfo.io
+    location = get_location_from_ip(ip)
+
+    # Get current time
+    now = datetime.datetime.now()
+
+    # Example: List of login activity (current session only for now)
+    login_activity = [
+        {
+            'device': device,
+            'location': location,
+            'ip': ip,
+            'time': now.strftime('%Y-%m-%d %H:%M:%S'),
+            'current': True,
+        },
+        # Add more sessions here if you implement session tracking
+    ]
+
+    # Check if there was a password error (to keep accordion open)
+    password_error = request.session.pop('password_error', None)
+    username_error = request.session.pop('username_error', None)
+
+    if request.method == 'POST':
+        new_username = request.POST.get('new_username')
+        if new_username is not None:
+            # Username change logic
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            if not new_username.strip():
+                messages.error(request, 'Username cannot be empty.')
+                request.session['username_error'] = True
+            elif len(new_username) < 3 or len(new_username) > 30:
+                messages.error(request, 'Username must be between 3 and 30 characters.')
+                request.session['username_error'] = True
+            elif not new_username.isalnum():
+                messages.error(request, 'Username must be alphanumeric.')
+                request.session['username_error'] = True
+            elif User.objects.filter(username=new_username).exclude(pk=request.user.pk).exists():
+                messages.error(request, 'This username is already taken.')
+                request.session['username_error'] = True
+            else:
+                request.user.username = new_username
+                request.user.save()
+                messages.success(request, 'Your username has been updated successfully!')
+                request.session['username_error'] = False
+            return redirect('settings')
+
+    context = {
+        'login_activity': login_activity,
+        'password_error': password_error,
+        'username_error': username_error,
+    }
+    return render(request, 'settings.html', context)

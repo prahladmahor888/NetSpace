@@ -7,6 +7,8 @@ from CustomAdmin.user_management import add_user, update_user
 
 urlpatterns = [
     
+    path('comments-count/', views.comments_count_api, name='comments_count_api'),
+    
     path('', views.admin_login, name='admin_login'),
     path('deshboard/', views.dashboard, name='dashboard'),
     path('admin_users/', views.admin_users, name="admin_users"),

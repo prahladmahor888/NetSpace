@@ -30,7 +30,7 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 AUTH_USER_MODEL = 'Accounts.CustomUser'
 
-DEFAULT_PROFILE_PIC = 'https://wallpaperaccess.com/full/1503351.jpg'
+DEFAULT_PROFILE_PIC = '/static/default/user.png'
 
 # Application definition
 

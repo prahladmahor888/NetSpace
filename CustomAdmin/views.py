@@ -18,6 +18,13 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 
 User = get_user_model()
 
+# Real-time comments count API for dashboard
+from NetSpace.models import PostComment
+
+def comments_count_api(request):
+    count = PostComment.objects.count()
+    return JsonResponse({'total_comments': count})
+
 def admin_login(request):
     try:
         if request.user.is_authenticated:
@@ -55,6 +62,7 @@ def admin_login(request):
         return render(request, 'admin-login.html', {'error': str(e)})
     
 def dashboard(request):
+
     # Get date 7 days ago
     seven_days_ago = timezone.now() - timedelta(days=7)
     thirty_days_ago = timezone.now() - timedelta(days=30)

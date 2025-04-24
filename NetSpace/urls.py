@@ -10,6 +10,7 @@ urlpatterns = [
     path('rooms/', views.rooms, name='rooms'),
     path("users/", views.users, name="users"), 
     path('settings/', views.settings, name='settings'),
+    path('settings/change-password/', views.change_password, name='change_password'),
     path('notifications/', views.notifications, name='notifications'),
     path("user/<str:username>/", views.user_profile, name="user_profile"),
     path("user_profile/", views.user_profile, name="user_profile"),

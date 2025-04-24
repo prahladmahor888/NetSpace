@@ -12,6 +12,9 @@
             height: 100vh;
             position: fixed;
             padding: 20px;
+            top: 0;
+            left: 0;
+            z-index: 1040;
         }
         .settings-content {
             padding: 30px;
@@ -37,88 +40,625 @@
             margin-bottom: 25px;
             padding-bottom: 15px;
         }
+        @media (max-width: 991.98px) {
+            .settings-sidebar {
+                position: static;
+                height: auto;
+                width: 100%;
+                padding: 0;
+                background: #f8f9fa;
+            }
+            .settings-content {
+                padding: 15px 5px;
+            }
+        }
+        @media (max-width: 767.98px) {
+            .settings-content {
+                padding: 10px 2px;
+            }
+            .card {
+                margin-bottom: 1rem;
+            }
+            .settings-header h5 {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
+    {% if messages %}
+      <div class="container mt-3">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <!-- Responsive Top Navbar for Mobile -->
+    <nav class="navbar navbar-light bg-white d-lg-none shadow-sm mb-3">
+        <div class="container-fluid">
+            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar" aria-controls="offcanvasSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <span class="navbar-brand mx-auto">Settings</span>
+        </div>
+    </nav>
+    <!-- Offcanvas Sidebar for Mobile -->
+    <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="offcanvasSidebar" aria-labelledby="offcanvasSidebarLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasSidebarLabel">Settings</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div class="nav flex-column" id="mobileSettingsSidebar">
+          <a class="nav-link active" href="#" data-section="profile" data-bs-toggle="tooltip" title="Edit your profile" role="button" tabindex="0"><i class="fas fa-user me-2"></i>Profile</a>
+          <a class="nav-link" href="#" data-section="privacy" data-bs-toggle="tooltip" title="Privacy options" role="button" tabindex="0"><i class="fas fa-lock me-2"></i>Privacy</a>
+          <a class="nav-link" href="#" data-section="notifications" data-bs-toggle="tooltip" title="Notification preferences" role="button" tabindex="0"><i class="fas fa-bell me-2"></i>Notifications</a>
+        </div>
+      </div>
+    </div>
+    <div class="container-fluid bg-light min-vh-100 py-4">
         <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 settings-sidebar">
+            <!-- Sidebar for desktop, hidden on mobile -->
+            <div class="col-md-3 col-lg-2 settings-sidebar d-none d-lg-block">
                 <h4 class="mb-4">Settings</h4>
-                <div class="nav flex-column">
-                    <a class="nav-link active" href="#profile"><i class="fas fa-user me-2"></i>Profile</a>
-                    <a class="nav-link" href="#privacy"><i class="fas fa-lock me-2"></i>Privacy</a>
-                    <a class="nav-link" href="#notifications"><i class="fas fa-bell me-2"></i>Notifications</a>
-                    <a class="nav-link" href="#account"><i class="fas fa-cog me-2"></i>Account</a>
+                <div class="nav flex-column" id="settingsSidebar">
+                    <a class="nav-link active" href="#" data-section="profile" data-bs-toggle="tooltip" title="Edit your profile" role="button" tabindex="0"><i class="fas fa-user me-2"></i>Profile</a>
+                    <a class="nav-link" href="#" data-section="privacy" data-bs-toggle="tooltip" title="Privacy options" role="button" tabindex="0"><i class="fas fa-lock me-2"></i>Privacy</a>
+                    <a class="nav-link" href="#" data-section="notifications" data-bs-toggle="tooltip" title="Notification preferences" role="button" tabindex="0"><i class="fas fa-bell me-2"></i>Notifications</a>
+                    <a class="nav-link" href="#" data-section="account" data-bs-toggle="tooltip" title="Account settings"><i class="fas fa-cog me-2"></i>Account</a>
+                    <a class="nav-link" href="#" data-section="theme" data-bs-toggle="tooltip" title="Switch theme"><i class="fas fa-moon me-2"></i>Theme</a>
+                    <a class="nav-link" href="#" data-section="blocked" data-bs-toggle="tooltip" title="View blocked users"><i class="fas fa-user-slash me-2"></i>Blocked Users</a>
                 </div>
             </div>
-
+            <!-- Offcanvas Sidebar for mobile -->
+            <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="offcanvasSidebar" aria-labelledby="offcanvasSidebarLabel">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="offcanvasSidebarLabel">Settings</h5>
+                    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <div class="nav flex-column" id="settingsSidebarOffcanvas">
+                        <a class="nav-link active" href="#" data-section="profile" data-bs-toggle="tooltip" title="Edit your profile"><i class="fas fa-user me-2"></i>Profile</a>
+                        <a class="nav-link" href="#" data-section="privacy" data-bs-toggle="tooltip" title="Privacy options"><i class="fas fa-lock me-2"></i>Privacy</a>
+                        <a class="nav-link" href="#" data-section="notifications" data-bs-toggle="tooltip" title="Notification preferences"><i class="fas fa-bell me-2"></i>Notifications</a>
+                        <a class="nav-link" href="#" data-section="account" data-bs-toggle="tooltip" title="Account settings"><i class="fas fa-cog me-2"></i>Account</a>
+                        <a class="nav-link" href="#" data-section="theme" data-bs-toggle="tooltip" title="Switch theme"><i class="fas fa-moon me-2"></i>Theme</a>
+                        <a class="nav-link" href="#" data-section="blocked" data-bs-toggle="tooltip" title="View blocked users"><i class="fas fa-user-slash me-2"></i>Blocked Users</a>
+                    </div>
+                </div>
+            </div>
             <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 offset-md-3 offset-lg-2">
+            <div class="col-12 col-md-9 col-lg-10 offset-md-3 offset-lg-2">
                 <div class="settings-content">
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
-                        
+
                         <!-- Profile Section -->
-                        <div id="profile" class="settings-section">
-                            <div class="settings-header">
-                                <h3>Profile Settings</h3>
-                                <p class="text-muted">Manage your profile information</p>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <div class="d-flex align-items-center mb-3">
-                                    <img src="{{ user.profile_picture.url|default:'#' }}" alt="Profile" class="rounded-circle me-3" style="width: 100px; height: 100px; object-fit: cover;">
-                                    <div>
-                                        <button class="btn btn-outline-primary">Change Photo</button>
-                                        <input type="file" name="profile_picture" class="d-none">
+                        <div id="profile" class="settings-section mb-4" style="display: block;">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Profile Settings</h5>
+                                    <small class="text-muted">Manage your profile information</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img id="profilePreview" src="{{ user.profile_picture.url|default:'#' }}" alt="Profile" class="rounded-circle me-3 border" style="width: 100px; height: 100px; object-fit: cover;">
+                                        <div>
+                                            <label class="btn btn-outline-primary mb-0" for="profilePicInput">Change Photo</label>
+                                            <input type="file" id="profilePicInput" name="profile_picture" class="d-none" accept="image/*" onchange="previewProfilePic(event)">
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Display Name</label>
-                                    <input type="text" class="form-control" name="display_name">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Bio</label>
-                                    <textarea class="form-control" name="bio" rows="3"></textarea>
+                                    <div class="mb-3">
+                                        <label class="form-label">Display Name</label>
+                                        <input type="text" class="form-control" name="display_name" value="{{ user.display_name }}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Bio</label>
+                                        <textarea class="form-control" name="bio" rows="3">{{ user.bio }}</textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Privacy Section -->
-                        <div id="privacy" class="settings-section">
-                            <div class="settings-header">
-                                <h3>Privacy Settings</h3>
-                                <p class="text-muted">Control your privacy preferences</p>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" name="private_profile">
-                                    <label class="form-check-label">Private Profile</label>
+                        <div id="privacy" class="settings-section mb-4" style="display: none;">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Privacy Settings</h5>
+                                    <small class="text-muted">Control your privacy preferences</small>
                                 </div>
-                                
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" name="show_email">
-                                    <label class="form-check-label">Show Email to Others</label>
-                                </div>
-                                
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" name="show_online_status">
-                                    <label class="form-check-label">Show Online Status</label>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" name="private_profile" id="privateProfile">
+                                        <label class="form-check-label" for="privateProfile">Private Profile</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" name="show_email" id="showEmail">
+                                        <label class="form-check-label" for="showEmail">Show Email to Others</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" name="show_online_status" id="showOnlineStatus">
+                                        <label class="form-check-label" for="showOnlineStatus">Show Online Status</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <!-- Notifications Section -->
+                        <div id="notifications" class="settings-section mb-4" style="display: none;">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notification Settings</h5>
+                                    <small class="text-muted">Manage how you receive notifications</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" name="email_notifications" id="emailNotifications">
+                                        <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" name="sms_notifications" id="smsNotifications">
+                                        <label class="form-check-label" for="smsNotifications">SMS Notifications</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" name="push_notifications" id="pushNotifications">
+                                        <label class="form-check-label" for="pushNotifications">Push Notifications</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Section -->
+                        <div id="account" class="settings-section mb-4" style="display: none;">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Account Settings</h5>
+                                    <small class="text-muted">Manage your account</small>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Django messages -->
+                                    {% if messages %}
+                                        {% for message in messages %}
+                                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                                {{ message }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    <!-- Accordion for account options -->
+                                    <div class="accordion" id="accountAccordion">
+                                        <!-- Account Status -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingStatus">
+                                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStatus" aria-expanded="true" aria-controls="collapseStatus">
+                                                    <i class="fas fa-info-circle me-2"></i>Account Status
+                                                </button>
+                                            </h2>
+                                            <div id="collapseStatus" class="accordion-collapse collapse show" aria-labelledby="headingStatus" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <span class="badge bg-success">Active</span> <!-- Replace with dynamic status -->
+                                                    <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="Your account is in good standing."><i class="fas fa-question-circle"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Change Password -->
+                                        <form method="post" action="{% url 'change_password' %}" class="accordion-item">
+                                            {% csrf_token %}
+                                            <h2 class="accordion-header" id="headingPassword">
+                                                <button class="accordion-button{% if password_error %} {% else %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePassword" aria-expanded="{% if password_error %}true{% else %}false{% endif %}" aria-controls="collapsePassword">
+                                                    <i class="fas fa-key me-2"></i>Change Password
+                                                </button>
+                                            </h2>
+                                            <div id="collapsePassword" class="accordion-collapse collapse{% if password_error %} show{% endif %}" aria-labelledby="headingPassword" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <input type="password" class="form-control mb-2" name="current_password" placeholder="Current Password" required>
+                                                    <input type="password" class="form-control mb-2" name="new_password" placeholder="New Password" required>
+                                                    <input type="password" class="form-control mb-2" name="confirm_password" placeholder="Confirm New Password" required>
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Update Password</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <!-- Change Email -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingEmail">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEmail" aria-expanded="false" aria-controls="collapseEmail">
+                                                    <i class="fas fa-envelope me-2"></i>Change Email
+                                                </button>
+                                            </h2>
+                                            <div id="collapseEmail" class="accordion-collapse collapse" aria-labelledby="headingEmail" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <input type="email" class="form-control mb-2" name="new_email" placeholder="New Email">
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Update Email</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Change Username -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingUsername">
+                                                <button class="accordion-button{% if username_error %} {% else %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUsername" aria-expanded="{% if username_error %}true{% else %}false{% endif %}" aria-controls="collapseUsername">
+                                                    <i class="fas fa-user-tag me-2"></i>Change Username
+                                                </button>
+                                            </h2>
+                                            <div id="collapseUsername" class="accordion-collapse collapse{% if username_error %} show{% endif %}" aria-labelledby="headingUsername" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <input type="text" class="form-control mb-2" name="new_username" placeholder="New Username">
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Update Username</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Two-Factor Authentication -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="heading2FA">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2FA" aria-expanded="false" aria-controls="collapse2FA">
+                                                    <i class="fas fa-shield-alt me-2"></i>Two-Factor Authentication
+                                                </button>
+                                            </h2>
+                                            <div id="collapse2FA" class="accordion-collapse collapse" aria-labelledby="heading2FA" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body d-flex align-items-center justify-content-between">
+                                                    <span>Add an extra layer of security to your account.</span>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary">Setup</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Login Activity -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingLoginActivity">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLoginActivity" aria-expanded="false" aria-controls="collapseLoginActivity">
+                                                    <i class="fas fa-laptop me-2"></i>Login Activity
+                                                </button>
+                                            </h2>
+                                            <div id="collapseLoginActivity" class="accordion-collapse collapse" aria-labelledby="headingLoginActivity" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <ul class="list-group mb-2">
+                                                        {% for session in login_activity %}
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <span><i class="fas fa-laptop me-2"></i>{{ session.device }} - {{ session.location }} <small class="text-muted">({{ session.time }})</small></span>
+                                                            {% if session.current %}<span class="badge bg-primary">Current</span>{% endif %}
+                                                        </li>
+                                                        {% empty %}
+                                                        <li class="list-group-item text-muted">No recent login activity.</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Connected Accounts -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingConnectedAccounts">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseConnectedAccounts" aria-expanded="false" aria-controls="collapseConnectedAccounts">
+                                                    <i class="fas fa-link me-2"></i>Connected Accounts
+                                                </button>
+                                            </h2>
+                                            <div id="collapseConnectedAccounts" class="accordion-collapse collapse" aria-labelledby="headingConnectedAccounts" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        {% for account in connected_accounts %}
+                                                        <div class="border rounded px-2 py-1 d-flex align-items-center">
+                                                            <i class="fab fa-{{ account.provider }} me-1"></i> {{ account.provider|title }}
+                                                            <form method="post" action="{% url 'disconnect_account' account.provider %}" class="ms-2">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                                            </form>
+                                                        </div>
+                                                        {% empty %}
+                                                        <span class="text-muted">No connected accounts.</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Session Management -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingSessionManagement">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSessionManagement" aria-expanded="false" aria-controls="collapseSessionManagement">
+                                                    <i class="fas fa-sign-out-alt me-2"></i>Session Management
+                                                </button>
+                                            </h2>
+                                            <div id="collapseSessionManagement" class="accordion-collapse collapse" aria-labelledby="headingSessionManagement" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <button type="button" class="btn btn-sm btn-outline-warning">Log out from all devices</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Language & Region -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingLanguage">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLanguage" aria-expanded="false" aria-controls="collapseLanguage">
+                                                    <i class="fas fa-globe me-2"></i>Language & Region
+                                                </button>
+                                            </h2>
+                                            <div id="collapseLanguage" class="accordion-collapse collapse" aria-labelledby="headingLanguage" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <div class="mb-2">
+                                                        <label class="form-label">Language</label>
+                                                        <select class="form-select" name="language">
+                                                            <option value="en">English</option>
+                                                            <option value="hi">Hindi</option>
+                                                            <option value="es">Spanish</option>
+                                                            <option value="fr">French</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <label class="form-label">Region/Timezone</label>
+                                                        <select class="form-select" name="timezone">
+                                                            <option value="Asia/Kolkata">Asia/Kolkata</option>
+                                                            <option value="America/New_York">America/New_York</option>
+                                                            <option value="Europe/London">Europe/London</option>
+                                                        </select>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Save Preferences</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Marketing Preferences -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingMarketing">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMarketing" aria-expanded="false" aria-controls="collapseMarketing">
+                                                    <i class="fas fa-bullhorn me-2"></i>Marketing Preferences
+                                                </button>
+                                            </h2>
+                                            <div id="collapseMarketing" class="accordion-collapse collapse" aria-labelledby="headingMarketing" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="marketingOptIn" name="marketing_opt_in">
+                                                        <label class="form-check-label" for="marketingOptIn">Receive marketing emails and updates</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Accessibility Settings -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingAccessibility">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAccessibility" aria-expanded="false" aria-controls="collapseAccessibility">
+                                                    <i class="fas fa-universal-access me-2"></i>Accessibility Settings
+                                                </button>
+                                            </h2>
+                                            <div id="collapseAccessibility" class="accordion-collapse collapse" aria-labelledby="headingAccessibility" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <div class="form-check form-switch mb-2">
+                                                        <input class="form-check-input" type="checkbox" id="highContrast" name="high_contrast">
+                                                        <label class="form-check-label" for="highContrast">Enable high-contrast mode</label>
+                                                    </div>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="largeFont" name="large_font">
+                                                        <label class="form-check-label" for="largeFont">Increase font size</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Profile Visibility -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingVisibility">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseVisibility" aria-expanded="false" aria-controls="collapseVisibility">
+                                                    <i class="fas fa-eye me-2"></i>Profile Visibility
+                                                </button>
+                                            </h2>
+                                            <div id="collapseVisibility" class="accordion-collapse collapse" aria-labelledby="headingVisibility" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <select class="form-select w-auto d-inline-block" name="profile_visibility">
+                                                        <option value="public">Public</option>
+                                                        <option value="friends">Friends Only</option>
+                                                        <option value="private">Private</option>
+                                                    </select>
+                                                    <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="Control who can see your profile."><i class="fas fa-question-circle"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Security Alerts -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingSecurityAlerts">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSecurityAlerts" aria-expanded="false" aria-controls="collapseSecurityAlerts">
+                                                    <i class="fas fa-bell me-2"></i>Security Alerts
+                                                </button>
+                                            </h2>
+                                            <div id="collapseSecurityAlerts" class="accordion-collapse collapse" aria-labelledby="headingSecurityAlerts" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="securityAlerts" name="security_alerts">
+                                                        <label class="form-check-label" for="securityAlerts">Receive alerts for new logins or password changes</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Deactivate/Delete Account -->
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingDeactivate">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDeactivate" aria-expanded="false" aria-controls="collapseDeactivate">
+                                                    <i class="fas fa-user-slash me-2"></i>Deactivate/Delete Account
+                                                </button>
+                                            </h2>
+                                            <div id="collapseDeactivate" class="accordion-collapse collapse" aria-labelledby="headingDeactivate" data-bs-parent="#accountAccordion">
+                                                <div class="accordion-body">
+                                                    <button type="button" class="btn btn-outline-danger" onclick="confirmDeactivate()"><i class="fas fa-user-slash me-2"></i>Deactivate Account</button>
+                                                    <button type="button" class="btn btn-outline-danger ms-2"><i class="fas fa-trash me-2"></i>Delete Account</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> <!-- End Accordion -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Theme Switcher Section -->
+                        <div id="theme" class="settings-section mb-4" style="display: none;">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0"><i class="fas fa-moon me-2"></i>Theme</h5>
+                                    <small class="text-muted">Switch between light and dark mode</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="themeSwitch" onchange="toggleTheme()">
+                                        <label class="form-check-label" for="themeSwitch">Dark Mode</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-2"></i>Save Changes</button>
+                        </div>
+
+                        <!-- Blocked Users Section -->
+                        <div id="blocked" class="settings-section mb-4" style="display: none;">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0"><i class="fas fa-user-slash me-2"></i>Blocked Users</h5>
+                                    <small class="text-muted">Manage users you have blocked or block new users</small>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Search User to Block -->
+                                    <form class="mb-4 d-flex" method="get" action="">
+                                        <input type="text" class="form-control me-2" name="search_user" placeholder="Search users to block..." value="{{ request.GET.search_user }}">
+                                        <button type="submit" class="btn btn-outline-primary"><i class="fas fa-search"></i> Search</button>
+                                    </form>
+                                    {% if search_results is not None %}
+                                        <div class="mb-3">
+                                            <h6>Search Results</h6>
+                                            {% if search_results %}
+                                                <ul class="list-group mb-3">
+                                                    {% for user in search_results %}
+                                                    <li class="list-group-item d-flex align-items-center justify-content-between">
+                                                        <div class="d-flex align-items-center">
+                                                            <img src="{{ user.profile_picture.url|default:'#' }}" alt="Avatar" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                                            <span>{{ user.username }}</span>
+                                                        </div>
+                                                        <form method="post" action="{% url 'block_user' user.id %}">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-sm btn-outline-warning"><i class="fas fa-user-slash me-1"></i>Block</button>
+                                                        </form>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <p class="text-muted mb-0">No users found.</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    <hr>
+                                    <h6>Already Blocked Users</h6>
+                                    {% if blocked_users %}
+                                        <ul class="list-group">
+                                            {% for user in blocked_users %}
+                                            <li class="list-group-item d-flex align-items-center justify-content-between">
+                                                <div class="d-flex align-items-center">
+                                                    <img src="{{ user.profile_picture.url|default:'#' }}" alt="Avatar" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    <span>{{ user.username }}</span>
+                                                </div>
+                                                <form method="post" action="{% url 'unblock_user' user.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-unlock me-1"></i>Unblock</button>
+                                                </form>
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p class="text-muted mb-0">You have not blocked any users.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Deactivate Account Modal -->
+    <div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deactivateModalLabel">Deactivate Account</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to deactivate your account? This action cannot be undone.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Deactivate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <script>
+        // Tooltip initialization
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Sidebar section tab logic (desktop)
+        document.querySelectorAll('#settingsSidebar .nav-link').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('#settingsSidebar .nav-link').forEach(function(l) {
+                    l.classList.remove('active');
+                });
+                document.querySelectorAll('.settings-section').forEach(function(section) {
+                    section.style.display = 'none';
+                });
+                this.classList.add('active');
+                var sectionId = this.getAttribute('data-section');
+                var section = document.getElementById(sectionId);
+                if (section) section.style.display = 'block';
+                // Sync offcanvas sidebar
+                document.querySelectorAll('#settingsSidebarOffcanvas .nav-link').forEach(function(l) {
+                    l.classList.remove('active');
+                    if (l.getAttribute('data-section') === sectionId) l.classList.add('active');
+                });
+            });
+        });
+        // Sidebar section tab logic (mobile/offcanvas)
+        document.querySelectorAll('#settingsSidebarOffcanvas .nav-link').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('#settingsSidebarOffcanvas .nav-link').forEach(function(l) {
+                    l.classList.remove('active');
+                });
+                document.querySelectorAll('.settings-section').forEach(function(section) {
+                    section.style.display = 'none';
+                });
+                this.classList.add('active');
+                var sectionId = this.getAttribute('data-section');
+                var section = document.getElementById(sectionId);
+                if (section) section.style.display = 'block';
+                // Sync desktop sidebar
+                document.querySelectorAll('#settingsSidebar .nav-link').forEach(function(l) {
+                    l.classList.remove('active');
+                    if (l.getAttribute('data-section') === sectionId) l.classList.add('active');
+                });
+                // Close offcanvas
+                var offcanvas = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvasSidebar'));
+                offcanvas.hide();
+            });
+        });
+
+        // Profile picture preview
+        function previewProfilePic(event) {
+            const [file] = event.target.files;
+            if (file) {
+                document.getElementById('profilePreview').src = URL.createObjectURL(file);
+            }
+        }
+
+        // Theme switcher
+        function toggleTheme() {
+            document.body.classList.toggle('bg-dark');
+            document.body.classList.toggle('text-light');
+        }
+
+        // Deactivate account confirmation
+        function confirmDeactivate() {
+            var modal = new bootstrap.Modal(document.getElementById('deactivateModal'));
+            modal.show();
+        }
+    </script>
+s"></script>

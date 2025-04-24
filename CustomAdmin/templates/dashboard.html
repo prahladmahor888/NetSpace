@@ -208,7 +208,7 @@
                     <div class="card-body">
                         <i class="fas fa-comments stats-icon"></i>
                         <h5 class="card-title">Comments</h5>
-                        <h3 class="mb-2">2,456</h3>
+                        <h3 class="mb-2"><span id="comments-count">...</span></h3>
                         <div class="stats-trend">
                             <i class="fas fa-arrow-up"></i>
                             <span>8% increase</span>
@@ -473,6 +473,18 @@
                 }
             }
         });
+    </script>
+    <script>
+        // Real-time comments count updater
+        function updateCommentsCount() {
+            fetch('/customadmin/comments-count/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('comments-count').textContent = data.total_comments.toLocaleString();
+                });
+        }
+        setInterval(updateCommentsCount, 5000); // Update every 5 seconds
+        updateCommentsCount(); // Initial load
     </script>
 </body>
 </html>
