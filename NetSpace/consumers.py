@@ -6,6 +6,9 @@ from .models import Message, VideoCall, VoiceCall
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from asgiref.sync import sync_to_async
+from datetime import datetime
+from .chatbot import ChatBot
+from .models import ChatBotMessage
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -228,3 +231,71 @@ class CallConsumer(AsyncWebsocketConsumer):
             'type': 'error',
             'message': message
         }))
+
+class AIChatConsumer(AsyncWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.chatbot = ChatBot()
+        self.history = []
+
+    async def connect(self):
+        self.user = self.scope['user']
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+        await self.accept()
+        
+        # Load chat history on connect
+        history = await self.get_chat_history()
+        if history:
+            await self.send(text_data=json.dumps({
+                'type': 'chat_history',
+                'history': history
+            }))
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+            if data.get('type') == 'message':
+                message = data.get('message', '').strip()
+                if message:
+                    # Get AI response
+                    response = self.chatbot.get_response(message, history=self.history)
+                    
+                    # Save to database
+                    await self.save_message(message, response)
+                    
+                    # Update history
+                    self.history.extend([message, response])
+                    if len(self.history) > 10:
+                        self.history = self.history[-10:]
+                    
+                    # Send response
+                    await self.send(text_data=json.dumps({
+                        'type': 'ai_response',
+                        'user_message': message,
+                        'response': response,
+                        'timestamp': datetime.now().strftime('%I:%M %p')
+                    }))
+        except Exception as e:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': str(e)
+            }))
+
+    @database_sync_to_async
+    def save_message(self, user_message, ai_response):
+        return ChatBotMessage.objects.create(
+            user=self.scope['user'],
+            message=user_message,
+            response=ai_response
+        )
+
+    @database_sync_to_async
+    def get_chat_history(self):
+        messages = ChatBotMessage.objects.filter(user=self.scope['user']).order_by('-timestamp')[:10]
+        return [{
+            'user_message': msg.message,
+            'response': msg.response,
+            'timestamp': msg.timestamp.strftime('%I:%M %p')
+        } for msg in reversed(messages)]

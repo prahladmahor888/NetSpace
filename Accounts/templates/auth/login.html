@@ -218,5 +218,22 @@
             </div>
         </form>
     </div>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        fetch("{% url 'record_visitor_api' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                user_agent: navigator.userAgent,
+                referrer: document.referrer,
+                session_key: "{{ request.session.session_key|default:'' }}",
+                user_id: "{{ request.user.id|default:'' }}"
+            })
+        });
+    });
+    </script>
 </body>
 </html>

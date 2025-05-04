@@ -40,6 +40,8 @@ urlpatterns = [
     path('room/<int:room_id>/join/', views.join_room, name='join_room'),
     path('room/<int:room_id>/messages/', views.room_messages, name='room_messages'),
     path('room/<int:room_id>/leave/', views.leave_room, name='leave_room'),
+    path('ai/chat/', views.ai_chat, name='ai_chat'),
+    path('ai/chat/history/', views.get_ai_chat_history, name='ai_chat_history'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

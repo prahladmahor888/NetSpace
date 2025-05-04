@@ -18,12 +18,51 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 
 User = get_user_model()
 
-# Real-time comments count API for dashboard
-from NetSpace.models import PostComment
+# Real-time API models
+from NetSpace.models import PostComment, UserPosts
+from .models import Visitor
+from django.contrib.sessions.models import Session
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 
 def comments_count_api(request):
     count = PostComment.objects.count()
     return JsonResponse({'total_comments': count})
+
+def visitor_stats_api(request):
+    """API endpoint for real-time visitor statistics and posts count"""
+    return JsonResponse({
+        'total_visitors': Visitor.total_count(),
+        'total_posts': UserPosts.objects.count()
+    })
+
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def record_visitor_api(request):
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body.decode('utf-8'))
+        ip_address = request.META.get('REMOTE_ADDR')
+        user_agent = data.get('user_agent', '')[:255]
+        referrer = data.get('referrer', '')
+        session_key = data.get('session_key', '')
+        user_id = data.get('user_id')
+        user = User.objects.filter(id=user_id).first() if user_id else None
+        query = {'ip_address': ip_address}
+        if user:
+            query['user'] = user
+
+        if not Visitor.objects.filter(**query).exists():
+            Visitor.objects.create(
+                ip_address=ip_address,
+                user_agent=user_agent,
+                referrer=referrer,
+                session_key=session_key,
+                user=user
+            )
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'invalid'}, status=400)
 
 def admin_login(request):
     try:
@@ -70,6 +109,12 @@ def dashboard(request):
     # Get user statistics
     total_users = User.objects.count()
     new_users_count = User.objects.filter(date_joined__gte=seven_days_ago).count()
+    
+    # Get visitor statistics and post count
+    visitor_stats = {
+        'total_visitors': Visitor.total_count()
+    }
+    total_posts = UserPosts.objects.count()
     
     # Calculate percentage increase
     past_users = User.objects.filter(date_joined__gte=thirty_days_ago, date_joined__lt=seven_days_ago).count()
@@ -119,9 +164,14 @@ def dashboard(request):
         'total_users': total_users,
         'new_users_count': new_users_count,
         'percentage_increase': round(percentage_increase, 1),
-        'activity_labels': labels,
-        'activity_data': months_data,
-        'user_distribution': user_distribution,
+        'activity_labels': json.dumps(labels),
+        'activity_data': json.dumps(months_data),
+        'user_distribution': {
+            'labels': json.dumps(['Active Users', 'Inactive Users', 'New Users']),
+            'data': json.dumps([active_users, inactive_users, new_users])
+        },
+        'visitor_stats': visitor_stats,
+        'total_posts': total_posts
     }
     
     return render(request, 'dashboard.html', context)
@@ -143,6 +193,29 @@ def toggle_users_status(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
+@csrf_exempt
+def record_visitor_api(request):
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body.decode('utf-8'))
+        ip_address = request.META.get('REMOTE_ADDR')
+        user_agent = data.get('user_agent', '')[:255]
+        referrer = data.get('referrer', '')
+        session_key = data.get('session_key', '')
+        user_id = data.get('user_id')
+        user = CustomUser.objects.filter(id=user_id).first() if user_id else None
+
+        Visitor.objects.create(
+            ip_address=ip_address,
+            user_agent=user_agent,
+            referrer=referrer,
+            session_key=session_key,
+            user=user
+        )
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'invalid'}, status=400)
 
 def admin_users_view(request):
     User = get_user_model()

@@ -447,3 +447,17 @@ class Notification(models.Model):
             to_user=to_user,
             notification_type='live_stream'
         )
+    
+class ChatBotMessage(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='chatbot_messages')
+    message = models.TextField()
+    response = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'ChatBot Message'
+        verbose_name_plural = 'ChatBot Messages'
+
+    def __str__(self):
+        return f"Message from {self.user.username} at {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}" if self.user else "ChatBot Message without user"

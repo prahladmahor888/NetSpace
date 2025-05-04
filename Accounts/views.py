@@ -15,6 +15,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from .models import BlockUser
 from django.db.models import Q
+from CustomAdmin.models import Visitor
+from django.contrib.sessions.models import Session
+
 
 # Create your views here.
 
@@ -63,9 +66,37 @@ def check_username(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+def get_client_ip(request):
+    # Handles X-Forwarded-For, etc.
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 def login(request):
     if request.method == 'POST':
+
+        ip_address = get_client_ip(request)
+        user_agent = request.META.get('HTTP_USER_AGENT', '')[:255]
+        referrer = request.META.get('HTTP_REFERER', '')
+        session_key = request.session.session_key or ''
+        user = request.user if request.user.is_authenticated else None
+
+        query = {'ip_address': ip_address}
+        if user:
+            query['user'] = user
+
+        if not Visitor.objects.filter(**query).exists():
+            Visitor.objects.create(
+                ip_address=ip_address,
+                user_agent=user_agent,
+                referrer=referrer,
+                session_key=session_key,
+                user=user
+            )
+
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
         remember_me = request.POST.get('remember_me') == 'on'

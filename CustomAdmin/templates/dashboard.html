@@ -184,25 +184,41 @@
                         <h5 class="card-title">Total Users</h5>
                         <h3 class="mb-2">{{ total_users }}</h3>
                         <div class="stats-trend">
-                            <i class="fas fa-arrow-{% if percentage_increase >= 0 %}up{% else %}down{% endif %}"></i>
-                            <span>{{ percentage_increase }}% {% if percentage_increase >= 0 %}increase{% else %}decrease{% endif %}</span>
+                            <i class="fas fa-arrow-up"></i>
+                            <span>Active Users</span>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card stats-card bg-info text-white">
+                    <div class="card-body">
+                        <i class="fas fa-eye stats-icon"></i>
+                        <h6 class="card-title">Total Visitors</h6>
+                        <h3>{{ visitor_stats.total_visitors }}</h3>
+                        <div class="stats-trend">
+                            <i class="fas fa-chart-line"></i>
+                            <span>All Time</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="col-12 col-sm-6 col-xl-3">
                 <div class="card stats-card bg-success text-white">
                     <div class="card-body">
                         <i class="fas fa-file-alt stats-icon"></i>
-                        <h5 class="card-title">Active Posts</h5>
-                        <h3 class="mb-2">845</h3>
+                        <h6 class="card-title">Total Posts</h6>
+                        <h3>{{ total_posts }}</h3>
                         <div class="stats-trend">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>5% increase</span>
+                            <i class="fas fa-chart-line"></i>
+                            <span>All Posts</span>
                         </div>
                     </div>
                 </div>
             </div>
+
             <div class="col-12 col-sm-6 col-xl-3">
                 <div class="card stats-card bg-warning text-white">
                     <div class="card-body">
@@ -475,16 +491,25 @@
         });
     </script>
     <script>
-        // Real-time comments count updater
-        function updateCommentsCount() {
+        // Real-time stats updater
+        function updateStats() {
+            // Update comments count
             fetch('/customadmin/comments-count/')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('comments-count').textContent = data.total_comments.toLocaleString();
                 });
+
+            // Update visitor stats and posts
+            fetch('/customadmin/visitor-stats/')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('.stats-card:nth-child(2) h3').textContent = data.total_visitors.toLocaleString();
+                    document.querySelector('.stats-card:nth-child(3) h3').textContent = data.total_posts.toLocaleString();
+                });
         }
-        setInterval(updateCommentsCount, 5000); // Update every 5 seconds
-        updateCommentsCount(); // Initial load
+        setInterval(updateStats, 5000); // Update every 5 seconds
+        updateStats(); // Initial load
     </script>
 </body>
 </html>

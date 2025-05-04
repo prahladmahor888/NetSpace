@@ -7,4 +7,5 @@ websocket_urlpatterns = [
     re_path(r'ws/call/$', consumers.CallConsumer.as_asgi()),
     re_path(r'ws/call/user/(?P<user_id>\w+)/$', consumers.CallConsumer.as_asgi()),
     re_path(r'ws/call/(?P<user_id>\w+)/$', consumers.CallConsumer.as_asgi()),
+    re_path(r'ws/ai/chat/$', consumers.AIChatConsumer.as_asgi()),
 ]

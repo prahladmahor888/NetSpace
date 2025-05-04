@@ -5,7 +5,7 @@ from Accounts.models import CustomUser as User, UserFollowing
 from django.http import JsonResponse
 import re
 from Accounts.models import UserFollowing as Follow
-from .models import Message, UserPosts, PostLike, PostComment, PostShare, Repost, UserStory, VideoCall, VoiceCall, Rooms, RoomMessage, Notification
+from .models import Message, UserPosts, PostLike, PostComment, PostShare, Repost, UserStory, VideoCall, VoiceCall, Rooms, RoomMessage, Notification, ChatBotMessage
 from django.utils import timezone
 from datetime import timedelta
 import json
@@ -15,6 +15,13 @@ from django.core.paginator import Paginator
 from django.conf import settings
 from SocialMedia.settings import DEFAULT_PROFILE_PIC
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from .chatbot import ChatBot, MultilingualBot
+from django.views.decorators.csrf import csrf_exempt
+from .models import ChatBotMessage
+
+# Initialize chatbot - do this at module level so it's only loaded once
+chatbot = MultilingualBot()
 
 
 # Create your views here.
@@ -1419,3 +1426,129 @@ def settings(request):
         'username_error': username_error,
     }
     return render(request, 'settings.html', context)
+
+@csrf_exempt
+@login_required
+def ai_chat(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_message = data.get('message', '').strip()
+            
+            if not user_message:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Message cannot be empty'
+                }, status=400)
+
+            # Get clean response from chatbot
+            ai_response = chatbot.get_response(user_message)
+            
+            # Save conversation
+            chat_message = ChatBotMessage.objects.create(
+                user=request.user,
+                message=user_message,
+                response=ai_response
+            )
+            
+            # Format timestamp
+            timestamp = chat_message.timestamp.strftime('%I:%M %p')
+
+            return JsonResponse({
+                'status': 'success',
+                'response': ai_response,
+                'timestamp': timestamp
+            })
+            
+        except Exception as e:
+            logger.error(f"ChatBot error: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Sorry, I had trouble processing that message. Please try again.'
+            }, status=500)
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@login_required
+@require_http_methods(["POST"])
+def ai_chat(request):
+    try:
+        data = json.loads(request.body)
+        user_message = data.get('message')
+        
+        # Create a simple response for now
+        ai_response = f"You said: {user_message}. I am a chatbot."
+        
+        # Save the conversation
+        chat_message = ChatBotMessage.objects.create(
+            user=request.user,
+            message=user_message,
+            response=ai_response
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'response': ai_response,
+            'timestamp': chat_message.timestamp.strftime('%I:%M %p')
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+
+@login_required
+def get_ai_chat_history(request):
+    messages = ChatBotMessage.objects.filter(user=request.user).order_by('timestamp')
+    history = [{
+        'message': msg.message,
+        'response': msg.response,
+        'timestamp': msg.timestamp.strftime('%I:%M %p')
+    } for msg in messages]
+    
+    return JsonResponse({
+        'status': 'success',
+        'history': history
+    })
+
+@csrf_exempt
+@login_required
+def ai_chat(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_message = data.get('message', '')
+            
+            # Get chat history for context
+            history = list(ChatBotMessage.objects.filter(user=request.user)
+                         .order_by('-timestamp')[:5]
+                         .values_list('message', 'response'))
+            history_text = []
+            for msg, resp in reversed(history):
+                history_text.extend([msg, resp])
+            
+            # Get response from chatbot
+            ai_response = chatbot.get_response(user_message, history=history_text)
+            
+            # Save the conversation
+            chat_message = ChatBotMessage.objects.create(
+                user=request.user,
+                message=user_message,
+                response=ai_response
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'response': ai_response,
+                'timestamp': chat_message.timestamp.strftime('%I:%M %p')
+            })
+            
+        except Exception as e:
+            logger.error(f"ChatBot error: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Failed to process your message'
+            }, status=500)
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
