@@ -1110,9 +1110,12 @@
     <div class="profile-container">
         <div class="profile-header glass-effect">
             <div class="profile-image" onclick="{% if user.id == profile_user.id %}showStoryUpload(){% endif %}">
-                <img src="{{ user.profile_picture.url | default:'/static/default/user.png' }}" alt="Profile Picture">
                 {% if user.id == profile_user.id %}
+                    <img src="{{ user.profile_picture.url | default:'/static/default/user.png' }}" alt="Profile Picture">
                     <div class="story-upload-hint">Click to add story</div>
+
+                {% else %}
+                    <img src="{{ profile_user.profile_picture.url | default:'/static/default/user.png' }}" alt="Profile Picture"> 
                 {% endif %}
             </div>
             

@@ -9,9 +9,9 @@
         <div class="background">
             <img src="https://images.pexels.com/photos/1386603/pexels-photo-1386603.jpeg?auto=compress&cs=tinysrgb&w=600">
         </div>
-            <a href="#user"><img class="circle" src="https://images.pexels.com/photos/2010877/pexels-photo-2010877.jpeg?auto=compress&cs=tinysrgb&w=600"></a>
-            <a href="#name"><span class="white-text name">John Doe</span></a>
-            <a href="#email"><span class="white-text email">jdandturk@gmail.com</span></a>
+            <a href="#user"><img class="circle" src="{{ user.profile_picture.url }}"></a>
+            <a href="#name"><span class="white-text name">{{ user.username }}</span></a>
+            <a href="#email"><span class="white-text email">{{ user.email }}</span></a>
     </div>
 </li>
 <li><div class="divider"></div></li>

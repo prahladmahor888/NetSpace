@@ -1536,7 +1536,7 @@
                     </div>
 
                     <div class="image-pfp">
-                        <img src="{{ user.profile_picture.url | default:'/static/default/user.png' }}" 
+                        <img src="{{ post.profile_picture.profile_picture.url | default:'/static/default/user.png' }}" 
                              width="100" class="pfp" alt="{{ post.user.username }}">
                         <div class="post-header">
                             <div class="name">

@@ -15,7 +15,7 @@ class CustomUser(AbstractUser):
     nickname = models.CharField(max_length=50, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], null=True, blank=True)
-    profile_picture = models.ImageField(upload_to='profile_pics', null=True, blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pics', null=True, blank=True, default='/defaultpfp/user.png')
     updated_at = models.DateTimeField(auto_now=True)
     email_notifications = models.BooleanField(default=False)
     user_place = models.CharField(max_length=100, blank=True)

@@ -79,6 +79,7 @@ def home(request):
             'user': user_data,
             'content': post.post_content,
             'image': post.post_image if post.post_image else None,
+            'profile_picture': post.user.profile_picture.url ,
             'created_at': post.created_at,
             'is_own_post': post.user == request.user,
             'likes': likes_count,
