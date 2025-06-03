@@ -3,26 +3,85 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Count, F
 from Accounts.models import CustomUser as User, UserFollowing
 from django.http import JsonResponse
-import re
 from Accounts.models import UserFollowing as Follow
 from .models import Message, UserPosts, PostLike, PostComment, PostShare, Repost, UserStory, VideoCall, VoiceCall, Rooms, RoomMessage, Notification, ChatBotMessage
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from .chatbot import ChatBot
 from datetime import timedelta
-import json
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator
 from django.conf import settings
 from SocialMedia.settings import DEFAULT_PROFILE_PIC
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from .chatbot import ChatBot, MultilingualBot
-from django.views.decorators.csrf import csrf_exempt
-from .models import ChatBotMessage
+import logging
+import json
 
-# Initialize chatbot - do this at module level so it's only loaded once
-chatbot = MultilingualBot()
+# Set up logging
+logger = logging.getLogger(__name__)
 
+def calculate_post_relevance(post, user_interests, user):
+    """Calculate relevance score for a post based on content and user interests."""
+    score = 0
+    post_content = post.post_content.lower()
+    
+    # Content matching with user interests
+    for interest in user_interests:
+        if interest.strip() and interest.strip() in post_content:
+            score += 2
+    
+    # Engagement-based scoring
+    likes_ratio = post.post_likes.count() / (User.objects.count() or 1)
+    comments_ratio = post.post_comments.count() / (User.objects.count() or 1)
+    score += (likes_ratio + comments_ratio) * 3
+    
+    # Consider post freshness (newer posts get higher scores)
+    time_diff = timezone.now() - post.created_at
+    if time_diff.days < 1:
+        score += 1
+    elif time_diff.days < 7:
+        score += 0.5
+    
+    # Boost score if post has media
+    if post.post_image:
+        score += 0.5
+        
+    return score
+
+def process_post_for_feed(post, posts_list, current_user):
+    """Process a post and prepare it for the feed."""
+    user_data = {
+        'id': post.user.id,
+        'username': post.user.username,
+        'profile_picture': post.user.profile_picture.url if post.user.profile_picture else DEFAULT_PROFILE_PIC
+    }
+    
+    # Get engagement counts
+    likes_count = post.post_likes.count()
+    comments_count = post.post_comments.count()
+    shares_count = post.post_shares.count()
+    reposts_count = post.post_reposts.count()
+    
+    post_data = {
+        'id': post.id,
+        'user': user_data,
+        'content': post.post_content,
+        'image': post.post_image if post.post_image else None,
+        'profile_picture': post.user.profile_picture.url,
+        'created_at': post.created_at,
+        'is_own_post': post.user == current_user,
+        'likes': likes_count,
+        'comments': comments_count,
+        'shares': shares_count,
+        'reposts': reposts_count,
+        'is_liked': post.post_likes.filter(user=current_user).exists(),
+        'is_shared': post.post_shares.filter(user=current_user).exists(),
+        'is_reposted': post.post_reposts.filter(user=current_user).exists(),
+        'relevance_score': 0  # Default score, will be updated for suggested posts
+    }
+    
+    return post_data
 
 # Create your views here.
 @login_required(login_url='login')
@@ -55,41 +114,76 @@ def home(request):
             'is_own_story': story.user == request.user
         })
 
-    # Get posts with likes and comments counts
-    raw_posts = UserPosts.objects.filter(
-        Q(user__in=following) | Q(user=request.user)
-    ).select_related('user').prefetch_related('post_likes', 'post_comments', 'post_shares', 'post_reposts').order_by('-created_at')
+    # Get all posts for content-based suggestions
+    all_posts = UserPosts.objects.all().select_related('user').prefetch_related(
+        'post_likes', 'post_comments', 'post_shares', 'post_reposts'
+    ).order_by('-created_at')
 
+    # Get user interests from their profile
+    user_interests = request.user.user_interests.lower().split(',') if request.user.user_interests else []
+    
     posts = []
-    for post in raw_posts:
-        user_data = {
-            'id': post.user.id,
-            'username': post.user.username,
-            'profile_picture': DEFAULT_PROFILE_PIC
-        }
-        
-        # Get counts for likes and comments
-        likes_count = post.post_likes.count()
-        comments_count = post.post_comments.count()
-        shares_count = post.post_shares.count()
-        reposts_count = post.post_reposts.count()
-        
-        posts.append({
-            'id': post.id,
-            'user': user_data,
-            'content': post.post_content,
-            'image': post.post_image if post.post_image else None,
-            'profile_picture': post.user.profile_picture.url ,
-            'created_at': post.created_at,
-            'is_own_post': post.user == request.user,
-            'likes': likes_count,
-            'comments': comments_count,
-            'shares': shares_count,
-            'reposts': reposts_count,
-            'is_liked': post.post_likes.filter(user=request.user).exists(),
-            'is_shared': post.post_shares.filter(user=request.user).exists(),
-            'is_reposted': post.post_reposts.filter(user=request.user).exists()
-        })
+    seen_posts = set()  # To avoid duplicates
+
+    # First add followed users' posts
+    followed_posts = all_posts.filter(Q(user__in=following) | Q(user=request.user))
+    for post in followed_posts:
+        if post.id not in seen_posts:
+            post_data = {
+                'id': post.id,
+                'user': {
+                    'id': post.user.id,
+                    'username': post.user.username,
+                    'profile_picture': post.user.profile_picture.url if post.user.profile_picture else DEFAULT_PROFILE_PIC
+                },
+                'content': post.post_content,
+                'image': post.post_image if post.post_image else None,
+                'created_at': post.created_at,
+                'is_own_post': post.user == request.user,
+                'likes': post.post_likes.count(),
+                'comments': post.post_comments.count(),
+                'shares': post.post_shares.count(),
+                'reposts': post.post_reposts.count(),
+                'is_liked': post.post_likes.filter(user=request.user).exists(),
+                'is_shared': post.post_shares.filter(user=request.user).exists(),
+                'is_reposted': post.post_reposts.filter(user=request.user).exists(),
+                'relevance_score': calculate_post_relevance(post, user_interests, request.user) + 5  # Boost score for followed users
+            }
+            posts.append(post_data)
+            seen_posts.add(post.id)
+
+    # Then add suggested posts based on content
+    for post in all_posts:
+        if post.id not in seen_posts:
+            # Calculate content relevance score
+            relevance_score = calculate_post_relevance(post, user_interests, request.user)
+            
+            if relevance_score > 0:  # If post is relevant
+                post_data = {
+                    'id': post.id,
+                    'user': {
+                        'id': post.user.id,
+                        'username': post.user.username,
+                        'profile_picture': post.user.profile_picture.url if post.user.profile_picture else DEFAULT_PROFILE_PIC
+                    },
+                    'content': post.post_content,
+                    'image': post.post_image if post.post_image else None,
+                    'created_at': post.created_at,
+                    'is_own_post': post.user == request.user,
+                    'likes': post.post_likes.count(),
+                    'comments': post.post_comments.count(),
+                    'shares': post.post_shares.count(),
+                    'reposts': post.post_reposts.count(),
+                    'is_liked': post.post_likes.filter(user=request.user).exists(),
+                    'is_shared': post.post_shares.filter(user=request.user).exists(),
+                    'is_reposted': post.post_reposts.filter(user=request.user).exists(),
+                    'relevance_score': relevance_score
+                }
+                posts.append(post_data)
+                seen_posts.add(post.id)
+    
+    # Sort posts by relevance score and creation date
+    posts.sort(key=lambda x: (x.get('relevance_score', 0), x['created_at']), reverse=True)
     
     context = {
         'posts': posts,
@@ -1443,7 +1537,7 @@ def ai_chat(request):
                 }, status=400)
 
             # Get clean response from chatbot
-            ai_response = chatbot.get_response(user_message)
+            ai_response = ChatBot.get_response(user_message)
             
             # Save conversation
             chat_message = ChatBotMessage.objects.create(
@@ -1530,7 +1624,7 @@ def ai_chat(request):
                 history_text.extend([msg, resp])
             
             # Get response from chatbot
-            ai_response = chatbot.get_response(user_message, history=history_text)
+            ai_response = ChatBot.get_response(user_message, history=history_text)
             
             # Save the conversation
             chat_message = ChatBotMessage.objects.create(

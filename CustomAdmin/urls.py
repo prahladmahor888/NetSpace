@@ -20,6 +20,7 @@ urlpatterns = [
     path('admin_forms/', views.admin_users_form, name="admin_forms"),
     path('users/', views.admin_users_list, name='admin_users_list'),
     path('users/add/', views.admin_add_user_form, name='admin_add_user_form'),
+    path('admin_logout/', views.admin_logout, name='admin_logout'),
     path('users/add/submit/', views.admin_add_user, name='admin_add_user'),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

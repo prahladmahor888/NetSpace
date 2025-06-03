@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_protect
 from django.shortcuts import render, redirect, get_object_or_404
 from Accounts.models import CustomUser as User
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout as auth_logout
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.core.cache import cache
@@ -66,8 +66,15 @@ def record_visitor_api(request):
 
 def admin_login(request):
     try:
+        # If user is already authenticated
         if request.user.is_authenticated:
-            return redirect('dashboard')
+            if request.user.is_superuser or request.user.is_staff:
+                return redirect('dashboard')
+            else:
+                # If normal user is logged in, log them out
+                auth_logout(request)
+                messages.info(request, 'You have been logged out. Please login with admin credentials.')
+                return render(request, 'admin-login.html', {'error': 'Only admin and staff members are allowed.'})
         
         if request.method == 'POST':
             ip_address = request.META.get('REMOTE_ADDR')
@@ -80,27 +87,53 @@ def admin_login(request):
 
             username = request.POST.get('username')
             password = request.POST.get('password')
-            user = User.objects.filter(username=username)
-            if not user.exists():
-                messages.info(request, 'Username does not exist')
+            
+            # First check if user exists
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                messages.error(request, 'Username does not exist')
                 cache.set(cache_key, login_attempts + 1, 300)
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            
-            user = authenticate(request, username=username, password=password)
+                return render(request, 'admin-login.html')
 
-            if user and user.is_superuser:
-                login(request, user)
-                return redirect('dashboard')
+            # Try to authenticate user
+            user = authenticate(request, username=username, password=password)
             
-            messages.info(request, 'Invalid credentials')
+            if user is not None:
+                # Check if user is admin or staff
+                if user.is_superuser or user.is_staff:
+                    login(request, user)
+                    cache.delete(cache_key)  # Reset login attempts on success
+                    return redirect('dashboard')
+                else:
+                    messages.error(request, 'Only admin and staff members are allowed.')
+            else:
+                messages.error(request, 'Invalid credentials.')
+            
+            # Increment login attempts on any failure
             cache.set(cache_key, login_attempts + 1, 300)
-            return redirect('admin_login')
+            return render(request, 'admin-login.html')
+            
         return render(request, 'admin-login.html')
     
     except Exception as e:
         return render(request, 'admin-login.html', {'error': str(e)})
-    
+
+def admin_logout(request):
+    """Logs out the user and redirects to the login page."""
+    auth_logout(request)
+    messages.success(request, 'You have been logged out successfully.')
+    return redirect('admin_login')
+
+def is_admin_or_staff(user):
+    return user.is_superuser or user.is_staff
+
+@login_required
+@user_passes_test(is_admin_or_staff, login_url='admin_login')
 def dashboard(request):
+    # Additional check for admin/staff status
+    if not request.user.is_superuser and not request.user.is_staff:
+        return redirect('admin_login')
 
     # Get date 7 days ago
     seven_days_ago = timezone.now() - timedelta(days=7)
@@ -205,7 +238,7 @@ def record_visitor_api(request):
         referrer = data.get('referrer', '')
         session_key = data.get('session_key', '')
         user_id = data.get('user_id')
-        user = CustomUser.objects.filter(id=user_id).first() if user_id else None
+        user = User.objects.filter(id=user_id).first() if user_id else None
 
         Visitor.objects.create(
             ip_address=ip_address,

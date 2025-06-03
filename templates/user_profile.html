@@ -1211,10 +1211,9 @@
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="post-actions">
-                            <div class="likes">{{ post.total_likes }} Likes</div>
+                        <div class="post-actions">                            <div class="likes">{{ post.total_likes }} Likes</div>
                             <div class="comments">{{ post.total_comments }} Comments</div>
-                            <div class="retweets">{{ post.total_retweets }} Retweets</div>
+                            <div class="reposts">{{ post.total_reposts }} Reposts</div>
                             <div class="shares">{{ post.total_shares }} Shares</div>
                         </div>
                         <div class="action-buttons">
@@ -1245,79 +1244,135 @@
     </div>
 </div> <!-- profile-container end -->
 <script>
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    function toggleFollow(userId) {
-        const btn = event.target;
-        const followersCountElement = document.querySelector('.stat-item strong');
-        btn.disabled = true;
-        fetch(`/netspace/toggle_follow/${userId}/`, {  // Updated URL pattern
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken
-            },
-            body: JSON.stringify({ user_id: userId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const isFollowing = data.following;
-                btn.textContent = isFollowing ? 'Unfollow' : 'Follow';
-                btn.className = `btn ${isFollowing ? 'unfollow-btn' : 'follow-btn'}`;
-                if (followersCountElement) {
-                    followersCountElement.textContent = data.followers_count;
-                }
-                btn.classList.add('button-pop');
-                setTimeout(() => btn.classList.remove('button-pop'), 200);
-                if (isFollowing) {
-                    btn.classList.remove('follow-btn');
-                    btn.classList.add('unfollow-btn');
-                } else {
-                    btn.classList.remove('unfollow-btn');
-                    btn.classList.add('follow-btn');
-                }
+    const csrftoken = document.querySelector('[name=csrf-token]').content;
+
+    async function likePost(postId, button) {
+        try {
+            const response = await fetch('/netspace/post/like/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ post_id: postId })
+            });
+
+            const data = await response.json();
+            const icon = button.querySelector('i');
+            const likesCount = button.closest('.content').querySelector('.likes');
+            
+            if (data.status === 'liked') {
+                icon.classList.remove('far');
+                icon.classList.add('fas', 'text-danger');
+                button.classList.add('button-pop');
+                setTimeout(() => button.classList.remove('button-pop'), 200);
+            } else {
+                icon.classList.remove('fas', 'text-danger');
+                icon.classList.add('far');
             }
-        })
-        .catch(error => {
+            
+            likesCount.textContent = `${data.likes} Likes`;
+        } catch (error) {
             console.error('Error:', error);
-        })
-        .finally(() => {
-            btn.disabled = false;
-        });
+            alert('Failed to like post. Please try again.');
+        }
     }
 
-    function submitComment(event, postId) {
+    async function toggleComments(postId) {
+        try {
+            const response = await fetch(`/netspace/post/${postId}/comments/`);
+            const data = await response.json();
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('commentsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'commentsModal';
+            modal.style.display = 'flex';
+            
+            const comments = data.comments || [];
+            const commentsHtml = comments.length > 0 
+                ? comments.map(comment => `
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <strong>${comment.username}</strong>
+                            <small>${formatTimeAgo(comment.created_at)}</small>
+                        </div>
+                        <div class="comment-content">${comment.content}</div>
+                    </div>
+                `).join('')
+                : '<div class="no-comments">No comments yet. Be the first to comment!</div>';
+
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Comments</h3>
+                        <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <div class="comments-list">
+                        ${commentsHtml}
+                    </div>
+                    <form class="comment-form" onsubmit="handleComment(event, ${postId})">
+                        <input type="text" name="comment" placeholder="Write a comment..." required>
+                        <button type="submit">Post</button>
+                    </form>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('input').focus();
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to load comments');
+        }
+    }    async function handleComment(event, postId) {
         event.preventDefault();
         const form = event.target;
-        const input = form.querySelector('input');
+        const input = form.querySelector('input[name="comment"]');
+        const submitButton = form.querySelector('button[type="submit"]');
         const content = input.value.trim();
-
+        
         if (!content) return;
+        
+        submitButton.disabled = true;
+        submitButton.textContent = 'Posting...';
+        
+        try {
+            const response = await fetch('/netspace/add_comment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    post_id: postId,
+                    content: content
+                })
+            });
 
-        fetch('/netspace/add_comment/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken
-            },
-            body: JSON.stringify({
-                post_id: postId,
-                content: content
-            })
-        })
-        .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-            return response.json();
-        })
-        .then(data => {
+
+            const data = await response.json();
             if (data.success) {
                 const commentsList = form.closest('.modal-content').querySelector('.comments-list');
                 const noComments = commentsList.querySelector('.no-comments');
-                if (noComments) noComments.remove();
+                if (noComments) {
+                    noComments.remove();
+                }
                 
-                // Add the new comment to the list
                 const newComment = document.createElement('div');
                 newComment.className = 'comment-item';
                 newComment.innerHTML = `
@@ -1328,243 +1383,117 @@
                     <div class="comment-content">${content}</div>
                 `;
                 
-                commentsList.insertBefore(newComment, commentsList.firstChild);
-                input.value = '';
-
-                // Update comment count in the post
-                const postElement = document.querySelector('.post-actions .comments');
-                if (postElement) {
-                    const currentCount = parseInt(postElement.textContent) || 0;
-                    postElement.textContent = `${currentCount + 1} Comments`;
+                commentsList.insertBefore(newComment, commentsList.firstChild);                input.value = '';
+                
+                const commentsCount = document.querySelector(`.comments`);
+                if (commentsCount) {
+                    const countText = commentsCount.textContent;
+                    const currentCount = parseInt(countText.match(/\d+/)[0]) || 0;
+                    commentsCount.textContent = `${currentCount + 1} Comments`;
                 }
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
             alert('Failed to post comment. Please try again.');
-        });
-    }
-
-    function closeCommentsModal() {
-        document.getElementById('commentsModal').style.display = 'none';
-        currentPostId = null;
-    }
-    window.onclick = function(event) {
-        const modal = document.getElementById('commentsModal');
-        if (event.target == modal) {
-            closeCommentsModal();
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Post';
         }
     }
+
+    async function retweetPost(postId) {
+        try {
+            const response = await fetch('/netspace/repost-post/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ post_id: postId })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            const button = event.target.closest('.icon-button');
+            const icon = button.querySelector('i');
+            const repostsCount = button.closest('.content').querySelector('.reposts');
+
+            if (data.status === 'reposted') {
+                icon.style.color = '#28a745';  // Green color for reposted state
+                button.classList.add('button-pop');
+            } else {
+                icon.style.color = '#6c757d';  // Gray color for normal state
+            }
+            setTimeout(() => button.classList.remove('button-pop'), 200);
+
+            if (repostsCount) {
+                repostsCount.textContent = `${data.count} Reposts`;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to repost. Please try again.');
+        }
+    }
+
+    async function toggleShareMenu(postId) {
+        try {
+            const shareUrl = `${window.location.origin}/post/${postId}`;
+            
+            if (navigator.share) {
+                await navigator.share({
+                    title: 'Share this post',
+                    url: shareUrl
+                });
+            } else {
+                await navigator.clipboard.writeText(shareUrl);
+                alert('Post link copied to clipboard!');
+            }
+
+            // Update share count
+            const response = await fetch('/netspace/update_share_count/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ post_id: postId })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                const sharesCount = document.querySelector(`[data-post-id="${postId}"] .shares`);
+                if (sharesCount) {
+                    sharesCount.textContent = `${data.shares} Shares`;
+                }
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    }
+
     function formatTimeAgo(timestamp) {
         const date = new Date(timestamp);
         const now = new Date();
         const diff = Math.floor((now - date) / 1000);
+        
         if (diff < 60) return 'Just now';
         if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
         if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
+        
         return date.toLocaleDateString();
     }
-    function shareProfile() {
-        const currentUrl = window.location.href;
-        if (navigator.share) {
-            navigator.share({
-                title: `${document.title}`,
-                url: currentUrl
-            })
-            .catch(error => console.log('Error sharing:', error));
-        } else {
-            // Fallback for browsers that don't support Web Share API
-            navigator.clipboard.writeText(currentUrl)
-                .then(() => alert('Profile link copied to clipboard!'))
-                .catch(err => console.error('Failed to copy:', err));
-        }
-    }
-// Add this JavaScript to handle tab switching
-function switchTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.post-container').forEach(container => {
-        container.style.display = 'none';
-    });
-    // Show selected tab content
-    document.getElementById(`${tabName}-tab`).style.display = 'grid';
-    // Update tab active states
+
+    // Add click listeners to tabs
     document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
+        tab.addEventListener('click', () => {
+            switchTab(tab.dataset.tab);
+        });
     });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-}
-// Add click listeners to tabs
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        switchTab(tab.dataset.tab);
-    });
-});
-function likePost(postId, button) {
-    fetch('/netspace/like_post/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken
-        },
-        body: JSON.stringify({ post_id: postId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        const icon = button.querySelector('i');
-        const likesCount = button.closest('.content').querySelector('.likes');
-        
-        if (data.status === 'liked') {
-            icon.classList.remove('far');
-            icon.classList.add('fas', 'text-danger');
-            likesCount.textContent = `${data.likes} Likes`;
-            // Add animation
-            button.classList.add('button-pop');
-            setTimeout(() => button.classList.remove('button-pop'), 200);
-        } else {
-            icon.classList.remove('fas', 'text-danger');
-            icon.classList.add('far');
-            likesCount.textContent = `${data.likes} Likes`;
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
-function toggleComments(postId) {
-    fetch(`/netspace/get_comments/${postId}/`)
-    .then(response => response.json())
-    .then(data => {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.display = 'flex';
-        modal.setAttribute('data-post-id', postId);  // Add post ID to modal
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Comments</h3>
-                    <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
-                </div>
-                <div class="comments-list">
-                    ${data.comments && data.comments.length > 0 ? 
-                        data.comments.map(comment => `
-                            <div class="comment-item">
-                                <div class="comment-header">
-                                    <strong>${comment.username}</strong>
-                                    <small>${formatTimeAgo(comment.created_at)}</small>
-                                </div>
-                                <div class="comment-content">${comment.content}</div>
-                            </div>
-                        `).join('') 
-                        : '<p class="no-comments">No comments yet. Be the first to comment!</p>'
-                    }
-                </div>
-                <form class="comment-form" onsubmit="event.preventDefault(); handleComment(this, ${postId});">
-                    <input type="text" name="comment" placeholder="Write a comment..." required>
-                    <button type="submit">Post</button>
-                </form>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to load comments');
-    });
-}
-
-function handleComment(form, postId) {
-    const input = form.querySelector('input[name="comment"]');
-    const content = input.value.trim();
-    
-    if (!content) return;
-    
-    const commentData = {
-        post_id: postId,
-        content: content
-    };
-
-    fetch('/netspace/add_comment/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken
-        },
-        body: JSON.stringify(commentData)
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Update comments list
-            const commentsList = form.closest('.modal-content').querySelector('.comments-list');
-            const noComments = commentsList.querySelector('.no-comments');
-            if (noComments) noComments.remove();
-
-            // Add new comment to list
-            const newComment = `
-                <div class="comment-item">
-                    <div class="comment-header">
-                        <strong>${data.username}</strong>
-                        <small>Just now</small>
-                    </div>
-                    <div class="comment-content">${content}</div>
-                </div>
-            `;
-            commentsList.insertAdjacentHTML('afterbegin', newComment);
-            
-            // Clear input
-            input.value = '';
-            
-            // Update comment count on post
-            const post = document.querySelector(`[data-post-id="${postId}"]`);
-            const commentsCount = post ? post.querySelector('.comments') : document.querySelector('.comments');
-            if (commentsCount) {
-                const count = parseInt(commentsCount.textContent.split(' ')[0]) || 0;
-                commentsCount.textContent = `${count + 1} Comments`;
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to post comment. Please try again.');
-    });
-}
-function retweetPost(postId) {
-    fetch(`/netspace/repost_post/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken
-        },
-        body: JSON.stringify({ post_id: postId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        const button = event.target.closest('.icon-button');
-        const icon = button.querySelector('i');
-        if (data.status === 'reposted') {
-            icon.style.color = '#28a745';
-        } else {
-            icon.style.color = '#6c757d';
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
-function toggleShareMenu(postId) {
-    if (navigator.share) {
-        // For mobile devices
-        navigator.share({
-            title: 'Share this post',
-            url: `${window.location.origin}/post/${postId}`
-        }).catch(err => console.log('Error sharing:', err));
-    } else {
-        // For desktop - create a custom share menu
-        const shareUrl = `${window.location.origin}/post/${postId}`;
-        navigator.clipboard.writeText(shareUrl)
-            .then(() => alert('Post link copied to clipboard!'))
-            .catch(err => console.error('Failed to copy:', err));
-    }
-}
-</script>
+    </script>
 </body>
 </html>
