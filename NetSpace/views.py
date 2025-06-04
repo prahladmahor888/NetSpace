@@ -307,9 +307,11 @@ def user_profile(request, username=None):
         # Handle post image
         if post.post_image:
             try:
-                # Remove any potential double slashes and ensure proper URL format
-                image_url = post.post_image.url if hasattr(post.post_image, 'url') else post.post_image
-                image_url = image_url.replace('/media/media/', '/media/')
+                # Get the raw URL string
+                image_url = str(post.post_image)
+                # Ensure URL starts with /media/ if it's a relative path
+                if not image_url.startswith(('http://', 'https://', '/')):
+                    image_url = f'/media/{image_url}'
                 post_dict['image'] = image_url
             except:
                 post_dict['image'] = None
@@ -1647,3 +1649,85 @@ def ai_chat(request):
             }, status=500)
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@login_required
+def get_post_likes(request, post_id):
+    post = get_object_or_404(UserPosts, id=post_id)
+    likes = PostLike.objects.filter(post=post).select_related('user').order_by('-created_at')
+    
+    likes_data = [{
+        'username': like.user.username,
+        'profile_picture': like.user.profile_picture.url if like.user.profile_picture else DEFAULT_PROFILE_PIC,
+        'timestamp': like.created_at.strftime('%B %d, %Y %I:%M %p'),
+        'user_id': like.user.id
+    } for like in likes]
+    
+    return JsonResponse({'likes': likes_data})
+
+@login_required
+def get_post_comments(request, post_id):
+    post = get_object_or_404(UserPosts, id=post_id)
+    comments = PostComment.objects.filter(post=post).select_related('user').order_by('-created_at')
+    
+    comments_data = [{
+        'username': comment.user.username,
+        'profile_picture': comment.user.profile_picture.url if comment.user.profile_picture else DEFAULT_PROFILE_PIC,
+        'content': comment.content,
+        'timestamp': comment.created_at.strftime('%B %d, %Y %I:%M %p'),
+        'user_id': comment.user.id
+    } for comment in comments]
+    
+    return JsonResponse({'comments': comments_data})
+
+@login_required
+def get_post_reposts(request, post_id):
+    post = get_object_or_404(UserPosts, id=post_id)
+    reposts = Repost.objects.filter(original_post=post).select_related('user').order_by('-created_at')
+    
+    reposts_data = [{
+        'username': repost.user.username,
+        'profile_picture': repost.user.profile_picture.url if repost.user.profile_picture else DEFAULT_PROFILE_PIC,
+        'text': repost.repost_text,
+        'timestamp': repost.created_at.strftime('%B %d, %Y %I:%M %p'),
+        'user_id': repost.user.id
+    } for repost in reposts]
+    
+    return JsonResponse({'reposts': reposts_data})
+
+@login_required
+def post_detail(request, post_id):
+    post = get_object_or_404(UserPosts, id=post_id)
+    
+    # Handle post image URL
+    post_image = None
+    if post.post_image:
+        try:
+            # Get the raw URL string
+            image_url = str(post.post_image)
+            # Ensure URL starts with /media/ if it's a relative path
+            if not image_url.startswith(('http://', 'https://', '/')):
+                image_url = f'/media/{image_url}'
+            post_image = image_url
+        except Exception as e:
+            logger.error(f"Error processing post image: {str(e)}")
+            post_image = None
+    
+    context = {
+        'post': {
+            'id': post.id,
+            'user': post.user,
+            'post_content': post.post_content,
+            'post_image': post_image,
+            'created_at': post.created_at,
+            'total_likes': post.post_likes.count(),
+            'total_comments': post.post_comments.count(),
+            'total_reposts': post.post_reposts.count(),
+            'total_shares': post.post_shares.count(),
+            'is_liked': post.post_likes.filter(user=request.user).exists(),
+            'is_reposted': post.post_reposts.filter(user=request.user).exists(),
+            'post_comments': post.post_comments.select_related('user').order_by('-created_at'),
+        },
+        'DEFAULT_PROFILE_PIC': DEFAULT_PROFILE_PIC,
+    }
+    
+    return render(request, 'base/posts_detail.html', context)

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
 
 from . import views
 
@@ -42,6 +43,14 @@ urlpatterns = [
     path('room/<int:room_id>/leave/', views.leave_room, name='leave_room'),
     path('ai/chat/', views.ai_chat, name='ai_chat'),
     path('ai/chat/history/', views.get_ai_chat_history, name='ai_chat_history'),
+    path('posts/<int:post_id>/likes/', views.get_post_likes, name='get_post_likes'),
+    path('posts/<int:post_id>/comments/', views.get_post_comments, name='get_post_comments'),
+    path('posts/<int:post_id>/reposts/', views.get_post_reposts, name='get_post_reposts'),
+    path('post_detail', views.post_detail, name='get_post_details'),
+    path('post/<int:post_id>/', views.post_detail, name='post_detail'),
+    path('.well-known/appspecific/com.chrome.devtools.json', 
+         lambda r: HttpResponse(status=204), 
+         name='chrome-devtools'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

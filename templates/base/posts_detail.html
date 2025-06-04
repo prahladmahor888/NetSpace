@@ -1,0 +1,930 @@
+{% load static %}
+<!-- Add Font Awesome 6 CDN -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+/>
+
+<div class="post-details-container">
+  <!-- Post Header -->
+  <div class="post-header">
+    <div class="user-info">
+      <img
+        src="{{ post.user.profile_picture.url|default:'/static/default/user.png' }}"
+        alt="{{ post.user.username }}"
+        class="profile-image"
+      />
+      <div class="user-details">
+        <h3 class="username">{{ post.user.username }}</h3>
+        <span class="post-time">{{ post.created_at|timesince }} ago</span>
+      </div>
+    </div>
+    <div class="post-actions-dropdown">
+      <button class="btn-menu" onclick="toggleMenu(this)">
+        <i class="fas fa-ellipsis-vertical"></i>
+      </button>
+      <div class="dropdown-menu">
+        {% if post.user == request.user %}
+        <a href="#" onclick="editPost({{ post.id }})"
+          ><i class="fas fa-edit"></i> Edit Post</a
+        >
+        <a href="#" onclick="deletePost({{ post.id }})"
+          ><i class="fas fa-trash"></i> Delete Post</a
+        >
+        {% else %}
+        <a href="#" onclick="reportPost({{ post.id }})"
+          ><i class="fas fa-flag"></i> Report Post</a
+        >
+        {% endif %}
+        <a href="#" onclick="savePost({{ post.id }})"
+          ><i class="fas fa-bookmark"></i> Save Post</a
+        >
+      </div>
+    </div>
+  </div>
+
+  <!-- Post Content -->
+  <div class="post-content">
+    <p class="post-text">{{ post.post_content }}</p>
+    {% if post.post_image %}
+    <div class="post-image-container">
+      <img
+        src="{{ post.post_image }}"
+        alt="Post image"
+        class="post-image"
+        loading="lazy"
+        onerror="this.onerror=null; this.src='{% static 'default/image-placeholder.png' %}'"
+      />
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Engagement Stats -->
+  <div class="engagement-stats">
+    <div class="stat-item">
+      <div class="stat-icon clickable" onclick="likePost({{ post.id }}, this)">
+        <i
+          class="{% if post.is_liked %}fa-solid{% else %}fa-regular{% endif %} fa-heart"
+        ></i>
+      </div>
+      <span class="stat-count clickable" onclick="showLikesList({{ post.id }})"
+        >{{ post.total_likes }} Likes</span
+      >
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon clickable" onclick="toggleComments({{ post.id }})">
+        <i class="fa-solid fa-message"></i>
+      </div>
+      <span
+        class="stat-count clickable"
+        onclick="showCommentsList({{ post.id }})"
+        >{{ post.total_comments }} Comments</span
+      >
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon clickable" onclick="retweetPost({{ post.id }})">
+        <i class="fa-solid fa-retweet"></i>
+      </div>
+      <span
+        class="stat-count clickable"
+        onclick="showRepostsList({{ post.id }})"
+        >{{ post.total_reposts }} Reposts</span
+      >
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon clickable" onclick="sharePost({{ post.id }})">
+        <i class="fa-solid fa-share-nodes"></i>
+      </div>
+      <span class="stat-count">{{ post.total_shares }} Shares</span>
+    </div>
+  </div>
+
+  <!-- Comments Section -->
+  <div class="comments-section" id="comments-section-{{ post.id }}">
+    <div class="comment-form">
+      <img
+        src="{{ request.user.profile_picture.url|default:'/static/default/user.png' }}"
+        alt="Your profile"
+        class="comment-profile-image"
+      />
+      <form
+        onsubmit="submitComment(event, {{ post.id }})"
+        class="comment-input-form"
+      >
+        <input
+          type="text"
+          placeholder="Write a comment..."
+          class="comment-input"
+          id="comment-input-{{ post.id }}"
+        />
+        <button type="submit" class="btn-submit-comment">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Likes Modal -->
+  <div class="modal" id="likesModal-{{ post.id }}" style="display: none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Likes</h3>
+        <button
+          class="close-button"
+          onclick="closeModal('likesModal-{{ post.id }}')"
+        >
+          &times;
+        </button>
+      </div>
+      <div class="modal-body" id="likesList-{{ post.id }}">
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments Modal -->
+  <div class="modal" id="commentsModal-{{ post.id }}" style="display: none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Comments</h3>
+        <button
+          class="close-button"
+          onclick="closeModal('commentsModal-{{ post.id }}')"
+        >
+          &times;
+        </button>
+      </div>
+      <div class="modal-body" id="commentsList-{{ post.id }}">
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reposts Modal -->
+  <div class="modal" id="repostsModal-{{ post.id }}" style="display: none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Reposts</h3>
+        <button
+          class="close-button"
+          onclick="closeModal('repostsModal-{{ post.id }}')"
+        >
+          &times;
+        </button>
+      </div>
+      <div class="modal-body" id="repostsList-{{ post.id }}">
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .post-details-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+  }
+
+  .post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .profile-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .user-details {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .username {
+    font-weight: 600;
+    margin: 0;
+    color: #1a1a1a;
+  }
+
+  .post-time {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .post-actions-dropdown {
+    position: relative;
+  }
+
+  .btn-menu {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: #666;
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+
+  .dropdown-menu a {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+
+  .dropdown-menu a:hover {
+    background-color: #f8f9fa;
+  }
+
+  .post-content {
+    margin: 1rem 0;
+  }
+
+  .post-text {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 1rem;
+  }
+
+  .post-image-container {
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+
+  .post-image {
+    width: 100%;
+    max-height: 500px;
+    object-fit: cover;
+  }
+
+  .engagement-stats {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin: 1rem 0;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stat-icon {
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    position: relative;
+  }
+
+  .stat-icon:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .stat-icon i {
+    font-size: 1.5rem; /* Increased from 1.2rem */
+    transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  }
+
+  .fa-heart {
+    color: #666;
+    transition: color 0.3s ease;
+  }
+
+  .fa-heart.fa-solid {
+    color: #ff3366; /* Brighter red for liked state */
+  }
+
+  .fa-heart:hover {
+    color: #ff3366; /* Same as liked state */
+  }
+
+  .fa-message {
+    color: #1da1f2; /* Twitter blue */
+  }
+
+  .fa-message:hover {
+    color: #0d8edb; /* Darker blue on hover */
+  }
+
+  .fa-retweet {
+    color: #00ba7c; /* Green */
+  }
+
+  .fa-retweet:hover {
+    color: #00a167; /* Darker green on hover */
+  }
+
+  .fa-share-nodes {
+    color: #794bc4; /* Purple */
+  }
+
+  .fa-share-nodes:hover {
+    color: #6339a3; /* Darker purple on hover */
+  }
+
+  .stat-count {
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .stat-count.clickable:hover {
+    text-decoration: underline;
+    color: #007bff;
+  }
+
+  .comments-section {
+    margin-top: 2rem;
+  }
+
+  .comment-form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .comment-input-form {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  .comment-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    font-size: 0.9rem;
+  }
+
+  .btn-submit-comment {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-submit-comment:hover {
+    background: #0056b3;
+  }
+
+  .comment {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .comment-profile-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .comment-content {
+    flex: 1;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .comment-username {
+    font-weight: 600;
+    color: #333;
+  }
+
+  .comment-time {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .comment-text {
+    margin: 0;
+    color: #333;
+    line-height: 1.4;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+  }
+
+  .modal-content {
+    position: relative;
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    margin: 50px auto;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideIn 0.3s ease;
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    color: #333;
+  }
+
+  .close-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+  }
+
+  .modal-body {
+    padding: 1rem;
+    overflow-y: auto;
+  }
+
+  /* Enhanced modal list styles */
+  .user-list-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1.25rem;
+    border-bottom: 1px solid #eee;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .user-list-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+  }
+
+  .user-list-item:active {
+    transform: translateX(2px);
+  }
+
+  .user-list-item img {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 1.25rem;
+    border: 3px solid #fff;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease;
+  }
+
+  .user-list-item:hover img {
+    transform: scale(1.05);
+  }
+
+  .user-list-item .user-info {
+    flex: 1;
+    padding-right: 1rem;
+  }
+
+  .user-list-item .username {
+    font-weight: 700;
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 1.1rem;
+    display: inline-block;
+    margin-bottom: 0.35rem;
+    transition: color 0.2s ease;
+  }
+
+  .user-list-item .username:hover {
+    color: #007bff;
+    text-decoration: none;
+    transform: translateX(3px);
+  }
+
+  .user-list-item .comment-text,
+  .user-list-item .repost-text {
+    color: #4a4a4a;
+    margin: 0.75rem 0;
+    line-height: 1.5;
+    font-size: 1rem;
+    background: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #dee2e6;
+  }
+
+  .user-list-item .timestamp {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .user-list-item .timestamp i {
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+
+  .no-content {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #888;
+    font-style: italic;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin: 1rem;
+  }
+
+  .error {
+    text-align: center;
+    padding: 2rem;
+    color: #dc3545;
+    font-weight: 500;
+    background: #fff5f5;
+    border-radius: 12px;
+    margin: 1rem;
+    border: 1px solid #ffd7d7;
+  }
+
+  @media (max-width: 768px) {
+    .post-details-container {
+      margin: 1rem;
+      padding: 1rem;
+    }
+
+    .interaction-buttons {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .btn-interact {
+      flex: 1;
+      min-width: 45%;
+      padding: 0.5rem;
+      justify-content: center;
+    }
+
+    .engagement-stats {
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .stat-item {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .btn-interact {
+      flex: 1;
+      min-width: 100%;
+    }
+
+    .comment-form {
+      flex-direction: column;
+    }
+
+    .comment-input-form {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  function toggleMenu(button) {
+    const menu = button.nextElementSibling;
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  }
+
+  function likePost(postId, iconContainer) {
+    const icon = iconContainer.querySelector("i");
+
+    fetch("{% url 'like_post' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ post_id: postId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "liked") {
+          icon.classList.replace("fa-regular", "fa-solid");
+          icon.classList.add("liked");
+        } else {
+          icon.classList.replace("fa-solid", "fa-regular");
+          icon.classList.remove("liked");
+        }
+        updateLikeCount(postId, data.likes);
+      });
+  }
+
+  function submitComment(event, postId) {
+    event.preventDefault();
+    const input = document.getElementById(`comment-input-${postId}`);
+    const content = input.value.trim();
+
+    if (!content) return;
+
+    fetch("{% url 'add_comment' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        post_id: postId,
+        content: content,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success") {
+          appendComment(data.comment);
+          input.value = "";
+          updateCommentCount(postId, data.total_comments);
+        }
+      });
+  }
+
+  function appendComment(comment) {
+    const commentsList = document.querySelector(".comments-list");
+    const commentElement = document.createElement("div");
+    commentElement.className = "comment";
+    commentElement.innerHTML = `
+        <img src="${comment.user_image || "/static/default/user.png"}" 
+             alt="${comment.username}" 
+             class="comment-profile-image">
+        <div class="comment-content">
+            <div class="comment-header">
+                <span class="comment-username">${comment.username}</span>
+                <span class="comment-time">Just now</span>
+            </div>
+            <p class="comment-text">${comment.content}</p>
+        </div>
+    `;
+    commentsList.insertBefore(commentElement, commentsList.firstChild);
+  }
+
+  function updateLikeCount(postId, count) {
+    const likeCount = document.querySelector(".stat-item:first-child span");
+    likeCount.textContent = `${count} Likes`;
+  }
+
+  function updateCommentCount(postId, count) {
+    const commentCount = document.querySelector(".stat-item:nth-child(2) span");
+    commentCount.textContent = `${count} Comments`;
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function showLikesList(postId) {
+    const modal = document.getElementById(`likesModal-${postId}`);
+    modal.style.display = "block";
+
+    fetch(`{% url 'get_post_likes' post_id=post.id %}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const likesList = document.getElementById(`likesList-${postId}`);
+        if (data.likes?.length > 0) {
+          likesList.innerHTML = data.likes
+            .map(
+              (like) => `
+                    <div class="user-list-item">
+                        <img src="${like.profile_picture}" alt="${like.username}">
+                        <div class="user-info">
+                            <a href="/user/${like.username}" class="username">${like.username}</a>
+                            <div class="timestamp">
+                                <i class="fas fa-heart"></i>
+                                Liked ${like.timestamp}
+                            </div>
+                        </div>
+                    </div>
+                `
+            )
+            .join("");
+        } else {
+          likesList.innerHTML = '<div class="no-content">No likes yet</div>';
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        likesList.innerHTML = '<div class="error">Failed to load likes</div>';
+      });
+  }
+
+  function showCommentsList(postId) {
+    const modal = document.getElementById(`commentsModal-${postId}`);
+    modal.style.display = "block";
+
+    fetch(`{% url 'get_post_comments' post_id=post.id %}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const commentsList = document.getElementById(`commentsList-${postId}`);
+        if (data.comments?.length > 0) {
+          commentsList.innerHTML = data.comments
+            .map(
+              (comment) => `
+                    <div class="user-list-item">
+                        <img src="${comment.profile_picture}" alt="${comment.username}">
+                        <div class="user-info">
+                            <a href="/user/${comment.username}" class="username">${comment.username}</a>
+                            <div class="comment-text">${comment.content}</div>
+                            <div class="timestamp">
+                                <i class="fas fa-comment"></i>
+                                ${comment.timestamp}
+                            </div>
+                        </div>
+                    </div>
+                `
+            )
+            .join("");
+        } else {
+          commentsList.innerHTML =
+            '<div class="no-content">No comments yet</div>';
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        commentsList.innerHTML =
+          '<div class="error">Failed to load comments</div>';
+      });
+  }
+
+  function showRepostsList(postId) {
+    const modal = document.getElementById(`repostsModal-${postId}`);
+    modal.style.display = "block";
+
+    fetch(`{% url 'get_post_reposts' post_id=post.id %}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const repostsList = document.getElementById(`repostsList-${postId}`);
+        if (data.reposts?.length > 0) {
+          repostsList.innerHTML = data.reposts
+            .map(
+              (repost) => `
+                    <div class="user-list-item">
+                        <img src="${repost.profile_picture}" alt="${
+                repost.username
+              }">
+                        <div class="user-info">
+                            <a href="/user/${
+                              repost.username
+                            }" class="username">${repost.username}</a>
+                            ${
+                              repost.text
+                                ? `<div class="repost-text">${repost.text}</div>`
+                                : ""
+                            }
+                            <div class="timestamp">
+                                <i class="fas fa-retweet"></i>
+                                Reposted ${repost.timestamp}
+                            </div>
+                        </div>
+                    </div>
+                `
+            )
+            .join("");
+        } else {
+          repostsList.innerHTML =
+            '<div class="no-content">No reposts yet</div>';
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        repostsList.innerHTML =
+          '<div class="error">Failed to load reposts</div>';
+      });
+  }
+
+  function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.style.display = "none";
+  }
+
+  function toggleComments(postId) {
+    const commentsSection = document.getElementById(
+      `comments-section-${postId}`
+    );
+    const isHidden = commentsSection.style.display === "none";
+    commentsSection.style.display = isHidden ? "block" : "none";
+
+    if (isHidden) {
+      document.getElementById(`comment-input-${postId}`).focus();
+    }
+  }
+
+  function retweetPost(postId) {
+    fetch("{% url 'repost_post' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ post_id: postId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const repostCount = document.querySelector(
+          ".stat-item:nth-child(3) .stat-count"
+        );
+        repostCount.textContent = `${data.count} Reposts`;
+      });
+  }
+
+  function sharePost(postId) {
+    // You can implement share functionality here
+    // For example, open a share modal or copy link to clipboard
+    const postUrl = window.location.origin + `/post/${postId}/`;
+    navigator.clipboard
+      .writeText(postUrl)
+      .then(() => alert("Post link copied to clipboard!"))
+      .catch(() => alert("Failed to copy link"));
+  }
+
+  // Close modal when clicking outside
+  window.onclick = function (event) {
+    if (event.target.classList.contains("modal")) {
+      event.target.style.display = "none";
+    }
+  };
+</script>

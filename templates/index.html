@@ -1553,10 +1553,14 @@
                     <div class="post-content">
                         <p>{{ post.content }}</p>
                         {% if post.image %}
-                            <img src="{{ post.image }}" 
-                                 alt="Post Image" 
-                                 onerror="this.style.display='none'"
-                                 style="max-width: 100%; height: auto;">
+                            <a href="{% url 'post_detail' post.id %}">
+                              <img
+                                src="{{ post.image }}"
+                                alt="Post Image"
+                                onerror="this.style.display='none'"
+                                style="max-width: 100%; height: auto"
+                              />
+                            </a>
                         {% endif %}
                     </div>
                     <div class="post-actions">
