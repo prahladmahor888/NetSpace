@@ -33,289 +33,132 @@
         }
         .post-form {
             background-color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 95%;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            margin: 20px auto;
+            max-width: 700px;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            transition: all 0.3s ease;
         }
 
         .post-form form {
             width: 100%;
         }
 
-        .post-form form textarea {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-            resize: none;
-        }
-
-        .post-form form input[type="file"] {
-            margin-bottom: 10px;
-        }
-
-        .post-form form button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .post-form form button:hover {
-            background-color: #0056b3;
+        .d-flex {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
         }
 
         .image-pfp {
-            margin-right: 10px;
+            flex-shrink: 0;
         }
+
         .pfp {
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
         }
-        
-        .d-flex {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+
+        .pfp:hover {
+            transform: scale(1.05);
         }
 
         .flex-grow {
-            width: 100%;
-            display: flex;  
-            justify-content: center;
-            align-items: center;         
-                    
+            flex: 1;
         }
 
         .flex-grow textarea {
             width: 100%;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
+            min-height: 80px;
+            padding: 12px 15px;
+            border: 1px solid #e1e4e8;
+            border-radius: 12px;
+            margin-bottom: 15px;
             resize: none;
+            font-size: 15px;
+            transition: border-color 0.3s ease;
         }
 
-        .flex-grow input[type="file"] {
-            margin-bottom: 10px;
+        .flex-grow textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
         }
 
-        .flex-grow button {
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid #f0f2f5;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #536471;
+        }
+
+        .icon-button:hover {
+            background-color: #f0f2f5;
+            color: #007bff;
+        }
+
+        .share-button {
             background-color: #007bff;
             color: white;
-            border: none;
-            padding: 8px;
-            width: 100px;
-            height: 40px;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .flex-grow button:hover {
+        .share-button:hover {
             background-color: #0056b3;
+            transform: translateY(-1px);
         }
 
-        .flex-grow .image-pfp {
-            margin-right: 10px;
+        .share-button:active {
+            transform: translateY(0);
         }
 
-        .flex-grow .pfp {
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
+        .image-preview-container {
+            margin-top: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid #e1e4e8;
         }
 
         .profile-upload {
             display: none;
         }
 
-        .profile-upload-label {
-            cursor: pointer;
-        }
-
-        .profile-upload-label:hover .pfp {
-            opacity: 0.8;
-        }
-
-        .action-buttons {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .icon-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 12px;
-            font-size: 24px;
-            border-radius: 50%;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-button:hover {
-            background-color: #e9ecef;
-        }
-
-        .icon-button i {
-            font-size: 20px;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .icon-button i.animate-like {
-            transform: scale(1.5);
-            animation: likeAnimation 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes likeAnimation {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.5);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
         #file-icon {
-            color: #007bff;
-            font-size: 45px;
-            
-        }
-
-        .share-button {
-            background-color: #007bff;
-            color: white;
-            min-width: 40px;
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .share-button:hover {
-            background-color: #0056b3;
-        }
-
-        .share-button i {
-            color: white;
-        }
-
-        /* Responsive styles */
-        @media screen and (max-width: 768px) {
-            .post-form {
-                width: 100%;
-                margin: 0;
-                border-radius: 0;
-                padding: 15px;
-            }
-
-            .flex-grow textarea {
-                font-size: 14px;
-            }
-
-            .icon-button {
-                padding: 8px;
-                font-size: 20px;
-            }
-
-            #file-icon {
-                font-size: 35px;
-            }
-
-            .share-button {
-                min-width: 35px;
-                min-height: 35px;
-            }
-            .share-button i {
-                font-size: 16px;
-            }
-
-            .pfp {
-                width: 40px;
-                height: 40px;
-            }
-        }
-
-        @media screen and (max-width: 480px) {
-            .post-form {
-                padding: 10px;
-            }
-
-            .flex-grow textarea {
-                font-size: 12px;
-            }
-
-            .icon-button {
-                padding: 6px;
-                font-size: 18px;
-            }
-
-            #file-icon {
-                font-size: 30px;
-            }
-
-            .share-button {
-                min-width: 32px;
-                min-height: 32px;
-            }
-            .share-button i {
-                font-size: 14px;
-            }
-
-            .pfp {
-                width: 35px;
-                height: 35px;
-            }
-
-            .action-buttons {
-                gap: 5px;
-            }
-        }
-
-        @media screen and (max-width: 320px) {
-            .post-form {
-                padding: 8px;
-            }
-
-            .flex-grow textarea {
-                font-size: 11px;
-            }
-
-            .icon-button {
-                padding: 4px;
-                font-size: 16px;
-            }
-
-            #file-icon {
-                font-size: 25px;
-            }
-
-            .share-button {
-                min-width: 28px;
-                min-height: 28px;
-            }
-            .share-button i {
-                font-size: 12px;
-            }
-
-            .pfp {
-                width: 30px;
-                height: 30px;
-            }
+            font-size: 20px;
         }
 
         .menu {
@@ -1356,25 +1199,34 @@
                 <div class="d-flex">
                     <div class="image-pfp">
                         <label class="profile-upload-label">
-                            <img src="{{ user.profile_picture.url | default:'/static/default/user.png' }}" width="100" class="pfp" id="profile-preview" alt="">
+                            <img src="{{ user.profile_picture.url|default:'/static/default/user.png' }}" class="pfp" id="profile-preview" alt="Profile">
                             <input type="file" class="profile-upload" name="profile" accept="image/*" onchange="previewImage(event)">
                         </label>
                     </div>
                     <div class="flex-grow">
-                        <textarea name="post_content" id="post" cols="30" rows="2" placeholder="Write something..."></textarea>
+                        <textarea 
+                            name="post_content" 
+                            id="post" 
+                            placeholder="What's on your mind?"
+                            maxlength="500"
+                        ></textarea>
                         <div class="action-buttons">
-                            <label class="icon-button">
-                                <i class="fas fa-image file-icon" id="file-icon"></i>
-                                <input type="file" name="post_image" class="profile-upload" accept="image/*" onchange="handleImageSelect(event)" required>
-                            </label>
+                            <div class="left-actions">
+                                <label class="icon-button">
+                                    <i class="fas fa-image" id="file-icon"></i>
+                                    <span>Photo</span>
+                                    <input type="file" name="post_image" class="profile-upload" accept="image/*" onchange="handleImageSelect(event)">
+                                </label>
+                            </div>
                             <button type="submit" class="icon-button share-button">
+                                <span>Share</span>
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
                     </div>
                 </div>
             </form>
-            <div class="image-preview-container">
+            <div class="image-preview-container" style="display: none;">
                 <img src="" alt="Preview" class="image-preview">
             </div>
         </div>
